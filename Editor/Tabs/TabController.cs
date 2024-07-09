@@ -1,47 +1,51 @@
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
+using io.github.rollphes.boothManager.client;
 
-internal class TabController {
-    private static readonly VisualTreeAsset _tabIconActiveUxml = Resources.Load<VisualTreeAsset>("UI/Components/TabIconActive");
-    private static readonly VisualTreeAsset _tabIconPassiveUxml = Resources.Load<VisualTreeAsset>("UI/Components/TabIconPassive");
+namespace io.github.rollphes.boothManager.tabs {
 
-    private readonly VisualElement _tabBar;
+    internal class TabController {
+        private static readonly VisualTreeAsset _tabIconActiveUxml = Resources.Load<VisualTreeAsset>("UI/Components/TabIconActive");
+        private static readonly VisualTreeAsset _tabIconPassiveUxml = Resources.Load<VisualTreeAsset>("UI/Components/TabIconPassive");
 
-    private readonly TabBase[] _tabs;
-    private int _activeTabIndex = 0;
+        private readonly VisualElement _tabBar;
 
-    internal TabController(Client client, VisualElement tabContent, VisualElement tabBar) {
-        this._tabBar = tabBar;
+        private readonly TabBase[] _tabs;
+        private int _activeTabIndex = 0;
 
-        this._tabs = new TabBase[] {
+        internal TabController(Client client, VisualElement tabContent, VisualElement tabBar) {
+            this._tabBar = tabBar;
+
+            this._tabs = new TabBase[] {
             new AuthTab(client, tabContent),
             new DebugTab(client, tabContent)
         };
-        this._tabs[this._activeTabIndex].Show();
-        this.ShowTabBar();
-    }
+            this._tabs[this._activeTabIndex].Show();
+            this.ShowTabBar();
+        }
 
-    private void ShowTabBar() {
-        this._tabBar.Clear();
-        int index = -1;
-        foreach (var tab in this._tabs) {
-            index++;
-            var root = new VisualElement();
-            if (index == this._activeTabIndex) {
-                _tabIconActiveUxml.CloneTree(root);
-            } else {
-                _tabIconPassiveUxml.CloneTree(root);
+        private void ShowTabBar() {
+            this._tabBar.Clear();
+            int index = -1;
+            foreach (var tab in this._tabs) {
+                index++;
+                var root = new VisualElement();
+                if (index == this._activeTabIndex) {
+                    _tabIconActiveUxml.CloneTree(root);
+                } else {
+                    _tabIconPassiveUxml.CloneTree(root);
+                }
+                var tabIconElement = root.Q<VisualElement>("TabIcon");
+                tabIconElement.style.backgroundImage = new Background { texture = tab.TabIcon };
+                tabIconElement.tooltip = tab.Tooltip;
+                tabIconElement.RegisterCallback<ClickEvent>(evt => {
+                    this._activeTabIndex = Array.FindIndex(this._tabs, t => t.GetType() == tab.GetType());
+                    this.ShowTabBar();
+                    tab.Show();
+                });
+                this._tabBar.Add(root);
             }
-            var tabIconElement = root.Q<VisualElement>("TabIcon");
-            tabIconElement.style.backgroundImage = new Background { texture = tab.TabIcon };
-            tabIconElement.tooltip = tab.Tooltip;
-            tabIconElement.RegisterCallback<ClickEvent>(evt => {
-                this._activeTabIndex = Array.FindIndex(this._tabs, t => t.GetType() == tab.GetType());
-                this.ShowTabBar();
-                tab.Show();
-            });
-            this._tabBar.Add(root);
         }
     }
 }
