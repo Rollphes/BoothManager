@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <uie:Toolbar style="justify-content: space-between;">
+        <uie:ToolbarMenu tabindex="-1" parse-escape-sequences="true" display-tooltip-when-elided="true" />
+        <uie:ToolbarSearchField focusable="true" style="width: 30%; min-width: 30%;" />
+    </uie:Toolbar>
+    <ui:VisualElement style="flex-grow: 1; justify-content: flex-start; height: auto; min-height: auto; align-self: auto; flex-shrink: 1;">
+        <ui:Label text="Debug Content" />
+        <ui:VisualElement name="ElementButton" style="flex-grow: 0; align-items: center; justify-content: center; width: auto; height: 50px; background-color: rgb(87, 87, 87); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px;">
+            <ui:Label tabindex="-1" text="This ElementButton" parse-escape-sequences="true" display-tooltip-when-elided="true" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <uie:Toolbar>
+        <uie:ToolbarSpacer />
+        <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" style="-unity-text-align: middle-left;" />
+        <ui:VisualElement style="flex-grow: 1; align-items: center; flex-direction: row; justify-content: flex-end;">
+            <ui:Slider picking-mode="Ignore" value="42" high-value="100" style="width: 60px; min-width: 60px;" />
+            <uie:ToolbarSpacer />
+        </ui:VisualElement>
+    </uie:Toolbar>
+</ui:UXML>

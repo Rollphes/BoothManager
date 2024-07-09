@@ -1,0 +1,99 @@
+{
+    "default": {
+        "endpoint": {
+            "protocol": "https",
+            "domain": "booth.pm",
+            "path": "/"
+        }
+    },
+    "home": {
+        "endpoints": {
+            "home": {
+                "path": "/"
+            }
+        }
+    },
+    "auth": {
+        "endpoints": {
+            "signIn": {
+                "subDomain": "accounts",
+                "domain": "pixiv.net",
+                "path": "/login",
+                "queryParams": {
+                    "prompt": "select_account",
+                    "return_to": "https%3A%2F%2Fbooth.pm%2Fusers%2Fauth%2Fpixiv",
+                    "source": "booth",
+                    "view_type": "page",
+                    "_gl": "1*tye5an*_ga*NzMxMDk4NDI1LjE3MDcxODI0OTU.*_ga_RWT2QKJLDC*MTcwNzE4MjQ5NC4xLjEuMTcwNzE4MjUyNC4zMC4wLjA."
+                }
+            },
+            "signUp": {
+                "subDomain": "accounts",
+                "domain": "pixiv.net",
+                "path": "/signup",
+                "queryParams": {
+                    "prompt": "select_account",
+                    "return_to": "https%3A%2F%2Fbooth.pm%2Fusers%2Fauth%2Fpixiv",
+                    "source": "booth",
+                    "view_type": "page",
+                    "_gl": "1*tye5an*_ga*NzMxMDk4NDI1LjE3MDcxODI0OTU.*_ga_RWT2QKJLDC*MTcwNzE4MjQ5NC4xLjEuMTcwNzE4MjUyNC4zMC4wLjA."
+                }
+            }
+        },
+        "scripts": {
+            "checkLoggedIn": "document.querySelector('.before-signin') === null"
+        },
+        "selectors": {
+            "emailInput": "input[type=\"text\"]",
+            "passwordInput": "input[type=\"password\"]",
+            "errorMessage": ".sc-bn9ph6-5.fdOdXB",
+            "nickName": ".global-nav-nickname"
+        }
+    },
+    "api": {
+        "endpoints": {
+            "itemInfo": {
+                "subDomain": ":shopSubDomain",
+                "path": "/:lang/items/:itemId.json"
+            },
+            "likeList": {
+                "path": "/wish_lists.json"
+            },
+            "wishList": {
+                "subDomain": "accounts",
+                "path": "/wish_list_name_items.json",
+                "queryParams": {
+                    "page": ":wishPageNumber"
+                }
+            }
+        }
+    },
+    "library": {
+        "endpoints": {
+            "library": {
+                "subDomain": "accounts",
+                "path": "/library",
+                "queryParams": {
+                    "page": ":libraryPageNumber"
+                }
+            },
+            "gift": {
+                "subDomain": "accounts",
+                "path": "/library/gifts",
+                "queryParams": {
+                    "page": ":giftPageNumber"
+                }
+            }
+        },
+        "selectors": {
+            "orders": ".mb-16.bg-white.p-16",
+            "itemLink": ".flex.gap-8 a",
+            "itemImageLink": "img",
+            "shopLink": ".no-underline",
+            "variationName": ".text-text-default.font-bold.typography-16",
+            "fileList": ".mt-16 .mt-16",
+            "fileName": ".typography-14",
+            "fileLink": "a"
+        }
+    }
+}

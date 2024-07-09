@@ -1,0 +1,15 @@
+{
+  "name": "io.github.rollphes.booth-manager",
+  "description": "this packaging α version",
+  "displayName": "BoothManager",
+  "version": "0.0.1",
+  "unity": "2018.1",
+  "author": {
+    "name": "Rollphes",
+    "email": "subrollphes@gmail.com",
+    "url": "https://x.com/rollphes"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "licensesUrl": "https://github.com/Rollphes/BoothManager/blob/main/LICENSE"
+}
