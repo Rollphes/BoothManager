@@ -4,13 +4,24 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using PuppeteerSharp;
-using UnityEngine;
 using io.github.rollphes.boothManager.config;
+using io.github.rollphes.boothManager.types.api;
+using System.Net.Http;
+using System.Net;
+using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
+using UnityEngine;
+using System.IO.Compression;
+using System.Text;
 
 namespace io.github.rollphes.boothManager.client {
     internal class Client {
         private static readonly string _browserPath = Path.Combine(ConfigLoader.RoamingDirectoryPath, "Browser");
+        private static readonly string _packagesDirectoryPath = Path.Combine(ConfigLoader.RoamingDirectoryPath, "Packages");
         private static readonly string _userAgent = "\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36\"";
+
+        private readonly HashSet<string> _itemIds = new();
+        private readonly Dictionary<string, ItemInfo> _itemInfoList = new();
 
         internal Action AfterDeploy;
         internal bool IsDeployed { get; private set; } = false;
@@ -96,7 +107,27 @@ namespace io.github.rollphes.boothManager.client {
             this.NickName = null;
         }
 
-        internal async Task FetchLibrary() {
+        private async Task CheckAutoLogin() {
+            var cookieParams = this._config.GetCookieParams();
+            var page = await this._browser.NewPageAsync();
+
+            if (cookieParams == null) {
+                return;
+            }
+
+            await page.SetCookieAsync(cookieParams);
+            await page.GoToAsync(this._config.GetEndpointUrl("home", "home"));
+
+            this.IsLoggedIn = await page.EvaluateExpressionAsync<bool>(this._config.GetScript("auth", "checkLoggedIn"));
+            if (this.IsLoggedIn) {
+                this.NickName = await this.GetConfigElementPropertyAsync(page, "auth", "nickName", "innerText");
+            }
+
+            await page.CloseAsync();
+        }
+
+        /* This Test Method */
+        internal async Task FetchItemIds() {
             this.ValidateBrowserInitialized();
 
             if (!this.IsLoggedIn) {
@@ -117,30 +148,12 @@ namespace io.github.rollphes.boothManager.client {
                         break;
 
                     var orderTasks = orders.Select(async order => {
-                        var itemUrlTask = this.GetConfigElementPropertyAsync(order, "library", "itemLink", "href");
-                        var imageUrlTask = this.GetConfigElementPropertyAsync(order, "library", "itemImageLink", "src");
-                        var shopUrlTask = this.GetConfigElementPropertyAsync(order, "library", "shopLink", "href");
-                        var variationNameTask = this.GetConfigElementPropertyAsync(order, "library", "variationName", "innerText");
+                        var itemUrlLink = await this.GetConfigElementPropertyAsync(order, "library", "itemLink", "href");
 
-                        var fileList = await order.QuerySelectorAllAsync(this._config.GetSelector("library", "fileList"));
-
-                        var fileTasks = fileList.Select(async file => {
-                            var name = await this.GetConfigElementPropertyAsync(file, "library", "fileName", "innerText");
-                            var link = await this.GetConfigElementPropertyAsync(file, "library", "fileLink", "href");
-                            return (name, link);
-                        });
-
-                        var fileResults = await Task.WhenAll(fileTasks);
-                        await Task.WhenAll(itemUrlTask, imageUrlTask, shopUrlTask, variationNameTask);
-
-                        var itemUrl = await itemUrlTask;
-                        var imageUrl = await imageUrlTask;
-                        var shopUrl = await shopUrlTask;
-                        var variationName = await variationNameTask;
-
-                        foreach (var (name, link) in fileResults) {
-                            Debug.Log($"Item: {variationName} - {name} - {link}");
-                        }
+                        var itemId = itemUrlLink.Split("/").Last();
+                        if (this._itemIds.Contains(itemId))
+                            return;
+                        this._itemIds.Add(itemId);
                     });
 
                     await Task.WhenAll(orderTasks);
@@ -153,23 +166,118 @@ namespace io.github.rollphes.boothManager.client {
             }
         }
 
-        private async Task CheckAutoLogin() {
-            var cookieParams = this._config.GetCookieParams();
+        /* This Test Method */
+        internal async Task FetchItemInfoList() {
+            if (!this.IsLoggedIn) {
+                throw new InvalidOperationException("You are not logged in.");
+            }
+
+            var httpClient = this.GetHttpClient();
+
+            var tasks = new List<Task>();
+
+            foreach (string itemId in this._itemIds) {
+                tasks.Add(this.FetchItemInfoAsync(httpClient, itemId));
+            }
+
+            await Task.WhenAll(tasks);
+        }
+
+        private async Task FetchItemInfoAsync(HttpClient httpClient, string itemId) {
+            var urlParams = new Dictionary<string, string> { { "lang", "ja" }, { "itemId", itemId } };
+            string url = this._config.GetEndpointUrl("api", "itemInfo", urlParams);
+            Uri uri = new(url);
+            httpClient.BaseAddress = new Uri(uri.GetLeftPart(UriPartial.Authority));
+
+            HttpResponseMessage response = await httpClient.GetAsync(uri.PathAndQuery);
+            response.EnsureSuccessStatusCode();
+
+            string responseBody = await response.Content.ReadAsStringAsync();
+            this._itemInfoList[itemId] = ItemInfo.FromJson(responseBody);
+        }
+
+        /* This Test Method */
+        internal async Task DownloadAllFile() {
+            this.ValidateBrowserInitialized();
+
+            if (!this.IsLoggedIn) {
+                throw new InvalidOperationException("You are not logged in.");
+            }
+
             var page = await this._browser.NewPageAsync();
+            await page.SetCookieAsync(this._config.GetCookieParams());
 
-            if (cookieParams == null) {
+            try {
+                foreach ((string itemId, ItemInfo itemInfo) in this._itemInfoList) {
+                    var itemDirectoryPath = Path.Combine(_packagesDirectoryPath, itemId);
+                    if (!Directory.Exists(itemDirectoryPath)) {
+                        Directory.CreateDirectory(itemDirectoryPath);
+                    }
+                    foreach (Variation variation in itemInfo.Variations) {
+                        if (variation.OrderUrl == null)
+                            continue;
+                        var variationDirectoryPath = Path.Combine(itemDirectoryPath, variation.Id.ToString());
+                        if (!Directory.Exists(variationDirectoryPath)) {
+                            Directory.CreateDirectory(variationDirectoryPath);
+                        }
+
+                        await page.GoToAsync(variation.OrderUrl.ToString());
+                        var files = await page.QuerySelectorAllAsync(this._config.GetSelector("order", "files"));
+                        foreach (var file in files) {
+                            var fileUrlLink = await this.GetConfigElementPropertyAsync(file, "order", "fileLink", "href");
+
+                            Uri fileLink = new (fileUrlLink);
+                            string fileId = fileLink.Segments[^1];
+                            string fileDirectoryPath = Path.Combine(variationDirectoryPath, fileId);
+
+                            if (Directory.Exists(fileDirectoryPath))
+                                continue;
+                            Directory.CreateDirectory(fileDirectoryPath);
+
+                            var httpClient = this.GetHttpClient();
+                            await this.DownloadFileFromRedirectUrlAsync(httpClient, fileUrlLink, fileDirectoryPath);
+                        }
+                    }
+                }
+            } finally {
+                await page.CloseAsync();
+            }
+        }
+
+        private async Task DownloadFileFromRedirectUrlAsync(HttpClient httpClient, string url, string destinationDirectoryPath) {
+
+
+            HttpResponseMessage response = await httpClient.GetAsync(url);
+            Uri location = null;
+
+            if (response.StatusCode == HttpStatusCode.Redirect ||
+                response.StatusCode == HttpStatusCode.MovedPermanently) {
+                location = response.Headers.Location;
+                response = await httpClient.GetAsync(location);
+            }
+            response.EnsureSuccessStatusCode();
+
+            var zipFileName = Uri.UnescapeDataString(location.Segments[^1]);
+            var zipFilePath = Path.Combine(destinationDirectoryPath, zipFileName);
+
+            byte[] content = await response.Content.ReadAsByteArrayAsync();
+
+            await File.WriteAllBytesAsync(zipFilePath, content);
+            this.ExtractZipFile(zipFilePath, destinationDirectoryPath);
+        }
+
+        private void ExtractZipFile(string zipFilePath, string extractPath) {
+
+            string pattern = @".zip$";
+            if (!Regex.IsMatch(zipFilePath, pattern))
                 return;
+
+            if (!Directory.Exists(extractPath)) {
+                Directory.CreateDirectory(extractPath);
             }
-
-            await page.SetCookieAsync(cookieParams);
-            await page.GoToAsync(this._config.GetEndpointUrl("home", "home"));
-
-            this.IsLoggedIn = await page.EvaluateExpressionAsync<bool>(this._config.GetScript("auth", "checkLoggedIn"));
-            if (this.IsLoggedIn) {
-                this.NickName = await this.GetConfigElementPropertyAsync(page, "auth", "nickName", "innerText");
-            }
-
-            await page.CloseAsync();
+            ZipFile.ExtractToDirectory(zipFilePath, extractPath, Encoding.GetEncoding("shift_jis"));
+            File.Delete(zipFilePath);
+            
         }
 
         // utility methods
@@ -191,6 +299,22 @@ namespace io.github.rollphes.boothManager.client {
             var element = await personElement.QuerySelectorAsync(selector);
             var value = (await element.GetPropertyAsync(property)).RemoteObject.Value.ToString();
             return value;
+        }
+
+        private HttpClient GetHttpClient() {
+            var handler = new HttpClientHandler {
+                CookieContainer = new CookieContainer(),
+                AllowAutoRedirect = false,
+            };
+            var cookies = this._config.GetCookieParams();
+            foreach (var cookie in cookies) {
+                handler.CookieContainer.Add(new Cookie(cookie.Name, cookie.Value, cookie.Path, cookie.Domain));
+            }
+
+            var httpClient = new HttpClient(handler);
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            return httpClient;
         }
     }
 }

@@ -50,10 +50,22 @@
             "nickName": ".global-nav-nickname"
         }
     },
+    "order": {
+        "endpoints": {
+            "orderDetail": {
+                "subDomain": "accounts",
+                "path": "/orders/:orderId"
+            }
+        },
+        "selectors": {
+            "files": ".legacy-list-item",
+            "fileName": ".u-flex-1.u-min-w-0.u-text-wrap.u-text-gray-500",
+            "fileLink": "a"
+        }
+    },
     "api": {
         "endpoints": {
             "itemInfo": {
-                "subDomain": ":shopSubDomain",
                 "path": "/:lang/items/:itemId.json"
             },
             "likeList": {
@@ -87,13 +99,7 @@
         },
         "selectors": {
             "orders": ".mb-16.bg-white.p-16",
-            "itemLink": ".flex.gap-8 a",
-            "itemImageLink": "img",
-            "shopLink": ".no-underline",
-            "variationName": ".text-text-default.font-bold.typography-16",
-            "fileList": ".mt-16 .mt-16",
-            "fileName": ".typography-14",
-            "fileLink": "a"
+            "itemLink": ".flex.gap-8 a"
         }
     }
 }

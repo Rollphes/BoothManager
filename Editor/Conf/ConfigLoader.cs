@@ -10,7 +10,7 @@ using UnityEngine;
 namespace io.github.rollphes.boothManager.config {
 
     internal class ConfigLoader {
-        internal static readonly string RoamingDirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BoothManager");
+        internal static readonly string RoamingDirectoryPath = "\\\\?\\" + Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BoothManager");
 
         private static readonly string _cookieDirectoryPath = Path.Combine(RoamingDirectoryPath, "Cookies");
         private static readonly string _cookieJsonPath = Path.Combine(_cookieDirectoryPath, "cookies.json");

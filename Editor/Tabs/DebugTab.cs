@@ -16,7 +16,9 @@ namespace io.github.rollphes.boothManager.tabs {
             var elementButton = this._tabContent.Q<VisualElement>("ElementButton");
             elementButton.RegisterCallback<ClickEvent>(async evt => {
                 Debug.Log("Element clicked!");
-                await this._client.FetchLibrary();
+                await this._client.FetchItemIds();
+                await this._client.FetchItemInfoList();
+                await this._client.DownloadAllFile();
                 Debug.Log("Library fetched!");
             });
         }
