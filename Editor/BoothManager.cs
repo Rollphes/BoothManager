@@ -3,16 +3,14 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using io.github.rollphes.boothManager.client;
 using io.github.rollphes.boothManager.tabs;
-using System.Security.Policy;
 using UnityEditor.UIElements;
-using System;
 
 namespace io.github.rollphes.boothManager {
     public class BoothManager : EditorWindow {
 
         private static Client _client;
-        private static string _githubLink = "https://github.com/Rollphes/BoothManager";
-        private static string _changeLogLink = $"{_githubLink}/releases";
+        private static readonly string _githubLink = "https://github.com/Rollphes/BoothManager";
+        private static readonly string _changeLogLink = $"{_githubLink}/releases";
 
         private TabController _tabController;
 
