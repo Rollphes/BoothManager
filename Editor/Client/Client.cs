@@ -12,7 +12,6 @@ using System.Net.Http.Headers;
 using System.Diagnostics;
 using UnityEditor;
 using System.Text.RegularExpressions;
-using Debug = UnityEngine.Debug;
 
 namespace io.github.rollphes.boothManager.client {
     internal enum DeployStatusType {
@@ -166,7 +165,6 @@ namespace io.github.rollphes.boothManager.client {
                     for (int i = 1; i <= lastPageCounts[pageType]; i++) {
                         var urlParams = new Dictionary<string, string> { { "pageNumber", i.ToString() } };
                         await page.GoToAsync(this._config.GetEndpointUrl("library", pageType, urlParams));
-                        await page.WaitForSelectorAsync(this._config.GetSelector("library", "orders"));
 
                         var orders = await page.QuerySelectorAllAsync(this._config.GetSelector("library", "orders"));
                         if (orders.Length == 0)
