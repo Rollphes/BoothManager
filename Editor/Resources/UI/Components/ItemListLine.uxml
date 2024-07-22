@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement style="flex-grow: 0; height: 16px; flex-direction: row;">
         <ui:VisualElement style="flex-grow: 0; width: 16px;" />
-        <ui:VisualElement name="ItemImage" style="flex-grow: 0; width: 16px; height: auto; flex-shrink: 1; margin-top: 1px; margin-right: 1px; margin-bottom: 1px; margin-left: 1px; flex-basis: auto; -unity-background-scale-mode: scale-and-crop; background-image: none;" />
+        <ui:VisualElement name="ItemImage" style="flex-grow: 0; width: 16px; height: auto; flex-shrink: 1; margin-top: 1px; margin-right: 1px; margin-bottom: 1px; margin-left: 1px; flex-basis: auto; -unity-background-scale-mode: scale-and-crop; background-image: resource(&apos;UI/Icons/ImageSync&apos;);" />
         <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ItemName" style="font-size: 12px; -unity-text-align: middle-left; flex-shrink: 1; flex-grow: 1; height: auto; text-overflow: ellipsis; -unity-font-style: normal; white-space: nowrap; overflow: hidden; width: 100px; margin-right: 0; margin-left: 0; padding-right: 0; padding-left: 0;" />
     </ui:VisualElement>
 </ui:UXML>

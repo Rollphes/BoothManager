@@ -116,7 +116,7 @@ namespace io.github.rollphes.boothManager.tabs {
             } catch (Exception e) {
                 Debug.LogError(e.Message);
                 EditorUtility.DisplayDialog("Error logging in", "Invalid Username/Email or Password", "OK");
-                this.Show();
+                this.Show();//test
             }
         }
 
