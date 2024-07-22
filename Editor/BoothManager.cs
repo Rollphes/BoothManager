@@ -16,14 +16,12 @@ namespace io.github.rollphes.boothManager {
 
         [MenuItem("BoothManager/MainWindow")]
         public static void ShowWindow() {
-            BoothManager wnd = GetWindow<BoothManager>("BoothManager");
+            var wnd = GetWindow<BoothManager>("BoothManager");
             wnd.Show();
         }
 
         [InitializeOnLoadMethod]
         private static async void Initialize() {
-            Debug.Log("Initialize Client");
-
             _client ??= new Client();
             if (_client.IsDeployed == false)
                 await _client.Deploy();
@@ -32,8 +30,6 @@ namespace io.github.rollphes.boothManager {
         }
 
         private static async void DestroyClient() {
-            Debug.Log("Destroy Client");
-
             if (_client != null) {
                 await _client.Destroy();
             }

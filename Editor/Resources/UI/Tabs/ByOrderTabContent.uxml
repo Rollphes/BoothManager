@@ -1,0 +1,16 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
+    <uie:Toolbar style="justify-content: space-between;">
+        <uie:ToolbarSearchField focusable="true" style="width: 30%; min-width: 30%;" />
+    </uie:Toolbar>
+    <ui:VisualElement name="ByOrderContent" style="flex-grow: 1;">
+        <ui:ScrollView style="flex-grow: 1;" />
+    </ui:VisualElement>
+    <uie:Toolbar>
+        <uie:ToolbarSpacer />
+        <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" style="-unity-text-align: middle-left;" />
+        <ui:VisualElement style="flex-grow: 1; align-items: center; flex-direction: row; justify-content: flex-end;">
+            <ui:Slider picking-mode="Ignore" value="42" high-value="250" name="ImageSizeSlider" tabindex="100" low-value="0" style="width: 60px; min-width: 60px;" />
+            <uie:ToolbarSpacer />
+        </ui:VisualElement>
+    </uie:Toolbar>
+</ui:UXML>

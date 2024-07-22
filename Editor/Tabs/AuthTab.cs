@@ -7,7 +7,7 @@ using io.github.rollphes.boothManager.client;
 namespace io.github.rollphes.boothManager.tabs {
     internal class AuthTab : TabBase {
         private static readonly VisualTreeAsset _loginFormUxml = Resources.Load<VisualTreeAsset>("UI/Components/LoginForm");
-        private static readonly VisualTreeAsset _loginFormTryingUxml = Resources.Load<VisualTreeAsset>("UI/Components/LoginFormTrying");
+        private static readonly VisualTreeAsset _loginFormExecutionStatusUxml = Resources.Load<VisualTreeAsset>("UI/Components/LoginFormExecutionStatus");
         private static readonly VisualTreeAsset _loginSuccessUxml = Resources.Load<VisualTreeAsset>("UI/Components/LoginSuccess");
 
         internal override string Tooltip => "îFèÿ";
@@ -17,12 +17,40 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private VisualElement _loginForm;
 
-        internal AuthTab(Client client, VisualElement tabContent) : base(client, tabContent) { }
+        public AuthTab(Client client, TabController tabController, VisualElement tabContent) : base(client, tabController, tabContent) { }
 
         internal override void Show() {
             base.Show();
-
             this._loginForm = this._tabContent.Q<VisualElement>("LoginForm");
+
+            if (this._client.IsDeployed == false) {
+                _loginFormExecutionStatusUxml.CloneTree(this._loginForm);
+                var statusLabel = this._loginForm.Q<Label>("ExecutionStatus");
+                statusLabel.text = "Trying to auto sign in...";
+
+                this._tabController._IsLock = true;
+
+                this._client.AfterDeploy += async () => {
+                    if (this._client.IsLoggedIn) {
+                        statusLabel.text = "Data Fetching...";
+                        await this._client.FetchItemInfos();
+                        this.ShowLoginSuccess();
+                    } else {
+                        this.ShowLoginForm();
+                    }
+                    this._tabController._IsLock = false;
+                };
+            } else {
+                if (this._client.IsLoggedIn) {
+                    this.ShowLoginSuccess();
+                } else {
+                    this.ShowLoginForm();
+                }
+            }
+        }
+
+        private void ShowLoginForm() {
+            this._loginForm.Clear();
             _loginFormUxml.CloneTree(this._loginForm);
 
             var signInButton = this._loginForm.Q<Button>("SignInButton");
@@ -30,18 +58,11 @@ namespace io.github.rollphes.boothManager.tabs {
             var emailField = this._loginForm.Q<TextField>("EmailField");
             var passwordField = this._loginForm.Q<TextField>("PasswordField");
 
-            if (_client.IsDeployed == false) {
-                _client.AfterDeploy += this.CheckAutoLogin;
-            } else {
-                this.CheckAutoLogin();
-            }
-
-
             signInButton.clicked += async () => await this.HandleSignIn(emailField.value, passwordField.value);
             signUpButton.clicked += () => this._client.SignUp();
         }
 
-        internal void ShowLoginSuccess() {
+        private void ShowLoginSuccess() {
             this._loginForm.Clear();
             _loginSuccessUxml.CloneTree(this._loginForm);
 
@@ -62,25 +83,20 @@ namespace io.github.rollphes.boothManager.tabs {
             }
 
             this._loginForm.Clear();
-            _loginFormTryingUxml.CloneTree(this._loginForm);
+            _loginFormExecutionStatusUxml.CloneTree(this._loginForm);
+            var statusLabel = this._loginForm.Q<Label>("ExecutionStatus");
+            statusLabel.text = "Trying to sign in...";
 
 
             try {
                 await this._client.SignIn(email, password);
+                statusLabel.text = "Fetching Data...";
+                await this._client.FetchItemInfos();
                 this.ShowLoginSuccess();
             } catch (Exception e) {
                 Debug.LogError(e.Message);
                 EditorUtility.DisplayDialog("Error logging in", "Invalid Username/Email or Password", "OK");
                 this.Show();
-            }
-        }
-
-        private void CheckAutoLogin() {
-            if (_client.IsLoggedIn) {
-                Debug.Log("AutoLogin Check Done!");
-                this.ShowLoginSuccess();
-            } else {
-                Debug.Log("AutoLogin Check Failed!");
             }
         }
     }

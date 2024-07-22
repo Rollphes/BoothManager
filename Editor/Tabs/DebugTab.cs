@@ -9,16 +9,14 @@ namespace io.github.rollphes.boothManager.tabs {
 
         protected override VisualTreeAsset InitTabUxml => Resources.Load<VisualTreeAsset>("UI/Tabs/DebugTabContent");
 
-        internal DebugTab(Client client, VisualElement tabContent) : base(client, tabContent) { }
+        public DebugTab(Client client, TabController tabController, VisualElement tabContent) : base(client, tabController, tabContent) { }
 
         internal override void Show() {
             base.Show();
             var elementButton = this._tabContent.Q<VisualElement>("ElementButton");
             elementButton.RegisterCallback<ClickEvent>(async evt => {
                 Debug.Log("Element clicked!");
-                await this._client.FetchItemIds();
-                await this._client.FetchItemInfoList();
-                await this._client.DownloadAllFile();
+                await this._client.FetchItemInfos();
                 Debug.Log("Library fetched!");
             });
         }

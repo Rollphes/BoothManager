@@ -1,5 +1,5 @@
 {
-    "name": "BoothManager.Editor",
+    "name": "io.github.rollphes.boothManager",
     "rootNamespace": "",
     "references": [],
     "includePlatforms": [

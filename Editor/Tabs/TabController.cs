@@ -13,14 +13,16 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private readonly TabBase[] _tabs;
         private int _activeTabIndex = 0;
+        internal bool _IsLock = false;
 
         internal TabController(Client client, VisualElement tabContent, VisualElement tabBar) {
             this._tabBar = tabBar;
 
             this._tabs = new TabBase[] {
-            new AuthTab(client, tabContent),
-            new DebugTab(client, tabContent)
-        };
+            new AuthTab(client, this, tabContent),
+            new ByOrderTab(client, this, tabContent),
+            new DebugTab(client, this, tabContent)
+            };
             this._tabs[this._activeTabIndex].Show();
             this.ShowTabBar();
         }
@@ -40,9 +42,11 @@ namespace io.github.rollphes.boothManager.tabs {
                 tabIconElement.style.backgroundImage = new Background { texture = tab.TabIcon };
                 tabIconElement.tooltip = tab.Tooltip;
                 tabIconElement.RegisterCallback<ClickEvent>(evt => {
-                    this._activeTabIndex = Array.FindIndex(this._tabs, t => t.GetType() == tab.GetType());
-                    this.ShowTabBar();
-                    tab.Show();
+                    if (!this._IsLock) {
+                        this._activeTabIndex = Array.FindIndex(this._tabs, t => t.GetType() == tab.GetType());
+                        this.ShowTabBar();
+                        tab.Show();
+                    }
                 });
                 this._tabBar.Add(root);
             }

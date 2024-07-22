@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
     <ui:VisualElement name="VisualElement" style="flex-grow: 0; min-width: initial; min-height: initial; width: 300px; height: 100px; align-items: stretch; justify-content: flex-start; margin-top: 30px; background-color: rgb(60, 60, 60); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px;">
         <ui:Label tabindex="-1" text="Account" parse-escape-sequences="true" display-tooltip-when-elided="true" style="-unity-font-style: bold; -unity-text-align: upper-center;" />
-        <ui:Label tabindex="-1" text="Trying to sign in..." parse-escape-sequences="true" display-tooltip-when-elided="true" />
+        <ui:Label tabindex="-1" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ExecutionStatus" />
     </ui:VisualElement>
 </ui:UXML>
