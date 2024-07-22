@@ -11,8 +11,21 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Diagnostics;
 using UnityEditor;
+using System.Text.RegularExpressions;
+using Debug = UnityEngine.Debug;
 
 namespace io.github.rollphes.boothManager.client {
+    internal enum DeployStatusType {
+        BlowserDownloading,
+        BlowserActivating,
+        AutoLoginInProgress,
+        Complete
+    }
+    internal enum FetchItemInfoStatusType {
+        ItemIdFetchingInLibrary,
+        ItemIdFetchingInGift,
+        ItemInfoFetching
+    }
     internal class Client {
         private static readonly string _browserPath = Path.Combine(ConfigLoader.RoamingDirectoryPath, "Browser");
         private static readonly string _packagesDirectoryPath = Path.Combine(ConfigLoader.RoamingDirectoryPath, "Packages");
@@ -22,7 +35,7 @@ namespace io.github.rollphes.boothManager.client {
 
         private ItemInfo[] _itemInfos = null;
 
-        internal Action AfterDeploy;
+        internal Action<DeployStatusType> onDeployProgressing;
         internal bool IsDeployed { get; private set; } = false;
         internal bool IsLoggedIn { get; private set; } = false;
         internal string NickName { get; private set; }
@@ -37,9 +50,11 @@ namespace io.github.rollphes.boothManager.client {
         internal async Task Deploy() {
             this._config.Deploy();
 
+            this.onDeployProgressing?.Invoke(DeployStatusType.BlowserDownloading);
             var browserFecher = new BrowserFetcher(new BrowserFetcherOptions { Path = _browserPath });
             var fetchedBrowser = await browserFecher.DownloadAsync();
 
+            this.onDeployProgressing?.Invoke(DeployStatusType.BlowserActivating);
             this._browser = await Puppeteer.LaunchAsync(new LaunchOptions {
                 ExecutablePath = fetchedBrowser.GetExecutablePath(),
                 HeadlessMode = HeadlessMode.True,
@@ -47,10 +62,12 @@ namespace io.github.rollphes.boothManager.client {
                 $"--user-agent={_userAgent}"
             }
             });
-            ;
+
+            this.onDeployProgressing?.Invoke(DeployStatusType.AutoLoginInProgress);
             await this.CheckAutoLogin();
+
+            this.onDeployProgressing?.Invoke(DeployStatusType.Complete);
             this.IsDeployed = true;
-            this.AfterDeploy?.Invoke();
         }
 
         internal async Task Destroy() {
@@ -121,7 +138,7 @@ namespace io.github.rollphes.boothManager.client {
 
             await page.CloseAsync();
         }
-        private async Task<List<string>> FetchItemIds() {
+        private async Task<List<string>> FetchItemIds(Action<FetchItemInfoStatusType, int, int> onProgressing) {
             this.ValidateBrowserInitialized();
 
             if (!this.IsLoggedIn) {
@@ -131,41 +148,52 @@ namespace io.github.rollphes.boothManager.client {
             var page = await this._browser.NewPageAsync();
             var itemIds = new List<string>();
             await page.SetCookieAsync(this._config.GetCookieParams());
+            var pageTypes = new string[] { "library", "gift" };
+            var lastPageCounts = new Dictionary<string, int>();
 
             try {
-                for (int i = 1; i <= 999; i++) {
-                    var urlParams = new Dictionary<string, string> { { "libraryPageNumber", i.ToString() } };
-                    //TODO:ギフトページにしか表示されないアイテムもあるが、ギフトをもらったことがないため未実装
-                    await page.GoToAsync(this._config.GetEndpointUrl("library", "library", urlParams));
+                foreach (var pageType in pageTypes) {
+                    var urlParams = new Dictionary<string, string> { { "pageNumber", "1" } };
+                    try {
+                        await page.GoToAsync(this._config.GetEndpointUrl("library", pageType, urlParams));
+                        var lastPageUrlLink = await this.GetConfigElementPropertyAsync(page, "library", "lastPageLink", "href");
+                        lastPageCounts[pageType] = int.Parse(Regex.Match(lastPageUrlLink, @"(?<=\?page=).*?(?=$|&)").ToString());
+                    } catch {
+                        lastPageCounts[pageType] = 0;
+                    }
+                }
+                foreach (var pageType in pageTypes) {
+                    for (int i = 1; i <= lastPageCounts[pageType]; i++) {
+                        var urlParams = new Dictionary<string, string> { { "pageNumber", i.ToString() } };
+                        await page.GoToAsync(this._config.GetEndpointUrl("library", pageType, urlParams));
+                        await page.WaitForSelectorAsync(this._config.GetSelector("library", "orders"));
 
-                    await page.WaitForSelectorAsync(this._config.GetSelector("library", "orders"));
+                        var orders = await page.QuerySelectorAllAsync(this._config.GetSelector("library", "orders"));
+                        if (orders.Length == 0)
+                            break;
 
-                    var orders = await page.QuerySelectorAllAsync(this._config.GetSelector("library", "orders"));
-                    if (orders.Length == 0)
-                        break;
+                        var orderTasks = orders.Select(async order => {
+                            var itemUrlLink = await this.GetConfigElementPropertyAsync(order, "library", "itemLink", "href");
+                            var itemId = itemUrlLink.Split("/").Last();
+                            if (!itemIds.Contains(itemId))
+                                itemIds.Add(itemId);
+                        });
 
-                    var orderTasks = orders.Select(async order => {
-                        var itemUrlLink = await this.GetConfigElementPropertyAsync(order, "library", "itemLink", "href");
+                        await Task.WhenAll(orderTasks);
+                        onProgressing?.Invoke(pageType == "library" ? FetchItemInfoStatusType.ItemIdFetchingInLibrary : FetchItemInfoStatusType.ItemIdFetchingInGift, i, lastPageCounts[pageType]);
 
-                        var itemId = itemUrlLink.Split("/").Last();
-                        if (itemIds.Contains(itemId))
-                            return;
-                        itemIds.Add(itemId);
-                    });
-
-                    await Task.WhenAll(orderTasks);
-
-                    if (orders.Length < 10)
-                        break;
+                        if (orders.Length < 10)
+                            break;
+                    }
                 }
             } finally {
                 await page.CloseAsync();
             }
             return itemIds;
         }
-        internal async Task<ItemInfo[]> FetchItemInfos(bool force = false) {
+        internal async Task<ItemInfo[]> FetchItemInfos(bool force = false, Action<FetchItemInfoStatusType, int, int> onProgressing = null) {
             if (this._itemInfos == null || force) {
-                var itemIds = await this.FetchItemIds();
+                var itemIds = await this.FetchItemIds(onProgressing);
                 if (!this.IsLoggedIn) {
                     throw new InvalidOperationException("You are not logged in.");
                 }
@@ -174,13 +202,16 @@ namespace io.github.rollphes.boothManager.client {
                 httpClient.DefaultRequestHeaders.Accept.Clear();
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                var tasks = new List<Task<ItemInfo>>();
+                int taskCompletedCount = 0;
 
-                foreach (string itemId in itemIds) {
-                    tasks.Add(this.FetchItemInfoAsync(httpClient, itemId));
-                }
+                var tasks = itemIds.Select(async (itemId) => {
+                    var itemInfo = await this.FetchItemInfoAsync(httpClient, itemId);
+                    taskCompletedCount++;
+                    onProgressing?.Invoke(FetchItemInfoStatusType.ItemInfoFetching, taskCompletedCount, itemIds.Count);
+                    return itemInfo;
+                });
 
-                var itemInfos =  await Task.WhenAll(tasks);
+                var itemInfos = await Task.WhenAll(tasks);
                 this._itemInfos = itemInfos;
                 return itemInfos;
             } else {
@@ -329,14 +360,14 @@ namespace io.github.rollphes.boothManager.client {
 
         private async Task<string> GetConfigElementPropertyAsync(IPage page, string section, string key, string property) {
             var selector = this._config.GetSelector(section, key);
-            var element = await page.QuerySelectorAsync(selector);
+            var element = await page.QuerySelectorAsync(selector) ?? throw new InvalidOperationException($"Element is not initialized.({selector})");
             var value = (await element.GetPropertyAsync(property)).RemoteObject.Value.ToString();
             return value;
         }
 
         private async Task<string> GetConfigElementPropertyAsync(IElementHandle personElement, string section, string key, string property) {
             var selector = this._config.GetSelector(section, key);
-            var element = await personElement.QuerySelectorAsync(selector);
+            var element = await personElement.QuerySelectorAsync(selector) ?? throw new InvalidOperationException($"Element is not initialized.({selector})");
             var value = (await element.GetPropertyAsync(property)).RemoteObject.Value.ToString();
             return value;
         }

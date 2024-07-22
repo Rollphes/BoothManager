@@ -26,19 +26,36 @@ namespace io.github.rollphes.boothManager.tabs {
             if (this._client.IsDeployed == false) {
                 _loginFormExecutionStatusUxml.CloneTree(this._loginForm);
                 var statusLabel = this._loginForm.Q<Label>("ExecutionStatus");
+                var progressBar = this._loginForm.Q<ProgressBar>("Progress");
                 statusLabel.text = "Trying to auto sign in...";
 
                 this._tabController._IsLock = true;
 
-                this._client.AfterDeploy += async () => {
-                    if (this._client.IsLoggedIn) {
-                        statusLabel.text = "Data Fetching...";
-                        await this._client.FetchItemInfos();
-                        this.ShowLoginSuccess();
-                    } else {
-                        this.ShowLoginForm();
+                this._client.onDeployProgressing += async (deployStatusType) => {
+                    switch (deployStatusType) {
+                        case DeployStatusType.BlowserDownloading:
+                            statusLabel.text = "Blowser Downloading...";
+                            break;
+                        case DeployStatusType.BlowserActivating:
+                            statusLabel.text = "Blowser Activating...";
+                            break;
+                        case DeployStatusType.AutoLoginInProgress:
+                            statusLabel.text = "Trying to auto sign in...";
+                            break;
+                        case DeployStatusType.Complete:
+                            if (this._client.IsLoggedIn) {
+                                statusLabel.text = "Last page count fetching...";
+                                await this._client.FetchItemInfos(false, (status, index, length) => {
+                                    this.FetchItemInfoOnProgressHandle(statusLabel, progressBar, status, index, length);
+                                });
+
+                                this.ShowLoginSuccess();
+                            } else {
+                                this.ShowLoginForm();
+                            }
+                            this._tabController._IsLock = false;
+                            break;
                     }
-                    this._tabController._IsLock = false;
                 };
             } else {
                 if (this._client.IsLoggedIn) {
@@ -58,7 +75,7 @@ namespace io.github.rollphes.boothManager.tabs {
             var emailField = this._loginForm.Q<TextField>("EmailField");
             var passwordField = this._loginForm.Q<TextField>("PasswordField");
 
-            signInButton.clicked += async () => await this.HandleSignIn(emailField.value, passwordField.value);
+            signInButton.clicked += async () => await this.SignInHandle(emailField.value, passwordField.value);
             signUpButton.clicked += () => this._client.SignUp();
         }
 
@@ -76,7 +93,7 @@ namespace io.github.rollphes.boothManager.tabs {
             };
         }
 
-        private async System.Threading.Tasks.Task HandleSignIn(string email, string password) {
+        private async System.Threading.Tasks.Task SignInHandle(string email, string password) {
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password)) {
                 EditorUtility.DisplayDialog("Error logging in", "Please enter a valid username and password", "OK");
                 return;
@@ -85,19 +102,44 @@ namespace io.github.rollphes.boothManager.tabs {
             this._loginForm.Clear();
             _loginFormExecutionStatusUxml.CloneTree(this._loginForm);
             var statusLabel = this._loginForm.Q<Label>("ExecutionStatus");
+            var progressBar = this._loginForm.Q<ProgressBar>("Progress");
             statusLabel.text = "Trying to sign in...";
 
 
             try {
                 await this._client.SignIn(email, password);
-                statusLabel.text = "Fetching Data...";
-                await this._client.FetchItemInfos();
+                statusLabel.text = "Last page count fetching...";
+                await this._client.FetchItemInfos(false, (status, index, length) => {
+                    this.FetchItemInfoOnProgressHandle(statusLabel, progressBar, status, index, length);
+                });
                 this.ShowLoginSuccess();
             } catch (Exception e) {
                 Debug.LogError(e.Message);
                 EditorUtility.DisplayDialog("Error logging in", "Invalid Username/Email or Password", "OK");
                 this.Show();
             }
+        }
+
+        private void FetchItemInfoOnProgressHandle(Label label, ProgressBar progress, FetchItemInfoStatusType status, int index, int length) {
+            progress.style.display = DisplayStyle.Flex;
+            progress.highValue = length;
+            progress.lowValue = 0;
+            progress.value = index;
+            switch (status) {
+                case FetchItemInfoStatusType.ItemIdFetchingInLibrary:
+                    label.text = "ItemId Fetching In Library page...";
+                    progress.title = $"{index}/{length} page";
+                    break;
+                case FetchItemInfoStatusType.ItemIdFetchingInGift:
+                    label.text = "ItemId Fetching In Gift page...";
+                    progress.title = $"{index}/{length} page";
+                    break;
+                case FetchItemInfoStatusType.ItemInfoFetching:
+                    label.text = "Item Info Fetching...";
+                    progress.title = $"{index}/{length} item";
+                    break;
+            }
+
         }
     }
 }
