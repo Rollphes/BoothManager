@@ -9,15 +9,15 @@ using System.Text.RegularExpressions;
 using System.Text;
 
 namespace io.github.rollphes.boothManager.tabs {
-    internal class ByOrderTab : TabBase {
+    internal class LibraryTab : TabBase {
         private static readonly VisualTreeAsset _itemPanelUxml = Resources.Load<VisualTreeAsset>("UI/Components/ItemPanel");
         private static readonly VisualTreeAsset _itemListLineUxml = Resources.Load<VisualTreeAsset>("UI/Components/ItemListLine");
-        internal override string Tooltip => "w“ü—š—ð";
-        internal override Texture2D TabIcon => Resources.Load<Texture2D>("UI/Icons/Default");
+        internal override string Tooltip => "ƒ‰ƒCƒuƒ‰ƒŠ";
+        internal override Texture2D TabIcon => Resources.Load<Texture2D>("UI/Icons/Package");
 
-        protected override VisualTreeAsset InitTabUxml => Resources.Load<VisualTreeAsset>("UI/Tabs/ByOrderTabContent");
+        protected override VisualTreeAsset InitTabUxml => Resources.Load<VisualTreeAsset>("UI/Tabs/LibraryTabContent");
 
-        private VisualElement _byOrderConetnt;
+        private VisualElement _libraryConetnt;
         private Slider _imageSizeSlider;
         private ToolbarSearchField _textFilterField;
 
@@ -25,11 +25,11 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private readonly Dictionary<string, Texture2D> _imageCache = new();
 
-        public ByOrderTab(Client client, TabController tabController, VisualElement tabContent) : base(client, tabController, tabContent) { }
+        public LibraryTab(Client client, TabController tabController, VisualElement tabContent) : base(client, tabController, tabContent) { }
 
         internal override void Show() {
             base.Show();
-            this._byOrderConetnt = this._tabContent.Q<VisualElement>("ByOrderContent");
+            this._libraryConetnt = this._tabContent.Q<VisualElement>("LibraryContent");
             this._textFilterField = this._tabContent.Q<ToolbarSearchField>("TextFilterField");
             this._textFilterField.RegisterValueChangedCallback(evt => this.ShowItemInfos());
 
@@ -46,8 +46,8 @@ namespace io.github.rollphes.boothManager.tabs {
         private void ShowItemInfos() {
             var itemInfos = this._client.FetchItemInfos().Result;
             var textFilteredItemInfos = Array.FindAll(itemInfos, (itemInfo) => {
-                var normalizedItemName = itemInfo.Name.Normalize(NormalizationForm.FormKD);
-                var normalizedFilter = this._textFilterField.value.Normalize(NormalizationForm.FormKD);
+                var normalizedItemName = itemInfo.Name.Normalize(NormalizationForm.FormKD).ToLower();
+                var normalizedFilter = this._textFilterField.value.Normalize(NormalizationForm.FormKD).ToLower();
                 return Regex.IsMatch(normalizedItemName, normalizedFilter);
             });
 
@@ -85,8 +85,8 @@ namespace io.github.rollphes.boothManager.tabs {
                 });
                 scrollView.Add(root);
             }
-            this._byOrderConetnt.Clear();
-            this._byOrderConetnt.Add(scrollView);
+            this._libraryConetnt.Clear();
+            this._libraryConetnt.Add(scrollView);
         }
 
         private void LoadImageFromUrlAsync(string url, Action<Texture2D> onCompleted) {

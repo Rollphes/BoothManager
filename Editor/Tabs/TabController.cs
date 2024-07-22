@@ -20,7 +20,7 @@ namespace io.github.rollphes.boothManager.tabs {
 
             this._tabs = new TabBase[] {
             new AuthTab(client, this, tabContent),
-            new ByOrderTab(client, this, tabContent),
+            new LibraryTab(client, this, tabContent),
             new DebugTab(client, this, tabContent)
             };
             this._tabs[this._activeTabIndex].Show();

@@ -2,7 +2,7 @@
     <uie:Toolbar style="justify-content: space-between;">
         <uie:ToolbarSearchField focusable="true" name="TextFilterField" style="width: 30%; min-width: 30%;" />
     </uie:Toolbar>
-    <ui:VisualElement name="ByOrderContent" style="flex-grow: 1;">
+    <ui:VisualElement name="LibraryContent" style="flex-grow: 1;">
         <ui:ScrollView style="flex-grow: 1;" />
     </ui:VisualElement>
     <uie:Toolbar>
