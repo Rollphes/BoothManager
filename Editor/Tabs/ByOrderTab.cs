@@ -4,6 +4,9 @@ using io.github.rollphes.boothManager.client;
 using UnityEngine.Networking;
 using System.Collections.Generic;
 using System;
+using UnityEditor.UIElements;
+using System.Text.RegularExpressions;
+using System.Text;
 
 namespace io.github.rollphes.boothManager.tabs {
     internal class ByOrderTab : TabBase {
@@ -16,6 +19,7 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private VisualElement _byOrderConetnt;
         private Slider _imageSizeSlider;
+        private ToolbarSearchField _textFilterField;
 
         private float _imageSize = 100f;
 
@@ -26,6 +30,8 @@ namespace io.github.rollphes.boothManager.tabs {
         internal override void Show() {
             base.Show();
             this._byOrderConetnt = this._tabContent.Q<VisualElement>("ByOrderContent");
+            this._textFilterField = this._tabContent.Q<ToolbarSearchField>("TextFilterField");
+            this._textFilterField.RegisterValueChangedCallback(evt => this.ShowItemInfos());
 
             this._imageSizeSlider = this._tabContent.Q<Slider>("ImageSizeSlider");
             this._imageSizeSlider.RegisterValueChangedCallback(evt => {
@@ -39,6 +45,12 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private void ShowItemInfos() {
             var itemInfos = this._client.FetchItemInfos().Result;
+            var textFilteredItemInfos = Array.FindAll(itemInfos, (itemInfo) => {
+                var normalizedItemName = itemInfo.Name.Normalize(NormalizationForm.FormKD);
+                var normalizedFilter = this._textFilterField.value.Normalize(NormalizationForm.FormKD);
+                return Regex.IsMatch(normalizedItemName, normalizedFilter);
+            });
+
 
             var scrollView = new ScrollView();
             if (this._imageSize > 50) {
@@ -46,7 +58,7 @@ namespace io.github.rollphes.boothManager.tabs {
                 scrollView.contentContainer.style.flexWrap = Wrap.Wrap;
             }
             scrollView.contentContainer.style.flexGrow = 0;
-            foreach (var itemInfo in itemInfos) {
+            foreach (var itemInfo in textFilteredItemInfos) {
                 var root = new VisualElement();
                 if (this._imageSize > 50) {
                     _itemPanelUxml.CloneTree(root);

@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
     <uie:Toolbar style="justify-content: space-between;">
-        <uie:ToolbarSearchField focusable="true" style="width: 30%; min-width: 30%;" />
+        <uie:ToolbarSearchField focusable="true" name="TextFilterField" style="width: 30%; min-width: 30%;" />
     </uie:Toolbar>
     <ui:VisualElement name="ByOrderContent" style="flex-grow: 1;">
         <ui:ScrollView style="flex-grow: 1;" />
