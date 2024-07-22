@@ -121,8 +121,6 @@ namespace io.github.rollphes.boothManager.client {
 
             await page.CloseAsync();
         }
-
-        /* This Test Method */
         private async Task<List<string>> FetchItemIds() {
             this.ValidateBrowserInitialized();
 
@@ -165,8 +163,6 @@ namespace io.github.rollphes.boothManager.client {
             }
             return itemIds;
         }
-
-        /* This Test Method */
         internal async Task<ItemInfo[]> FetchItemInfos(bool force = false) {
             if (this._itemInfos == null || force) {
                 var itemIds = await this.FetchItemIds();
@@ -261,6 +257,7 @@ namespace io.github.rollphes.boothManager.client {
         //    await Task.WhenAll(itemInfoTasks);
         //}
 
+        /* This Test Method */
         private async Task DownloadFileFromRedirectUrlAsync(HttpClient httpClient, string url, string destinationDirectoryPath) {
 
 
