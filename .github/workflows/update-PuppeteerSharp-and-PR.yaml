@@ -62,7 +62,7 @@ jobs:
               fi
             done
             for file in "$dir"/*; do
-              if [[ ! "$file" =~ \.(dll|[Ll]icense|LICENSE)$ ]]; then
+              if [[ ! "$file" =~ \.dll$ ]]; then
                 rm -rf "$file"
               fi
             done
