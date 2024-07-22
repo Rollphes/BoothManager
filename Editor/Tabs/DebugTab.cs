@@ -4,7 +4,7 @@ using io.github.rollphes.boothManager.client;
 
 namespace io.github.rollphes.boothManager.tabs {
     internal class DebugTab : TabBase {
-        internal override string Tooltip => "デバック";
+        internal override string Tooltip => "繝�繝舌ャ繧ｯ";
         internal override Texture2D TabIcon => Resources.Load<Texture2D>("UI/Icons/Default");
 
         protected override VisualTreeAsset InitTabUxml => Resources.Load<VisualTreeAsset>("UI/Tabs/DebugTabContent");

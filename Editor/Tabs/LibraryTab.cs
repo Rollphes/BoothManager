@@ -117,7 +117,7 @@ namespace io.github.rollphes.boothManager.tabs {
             char c;
             for (int i = 0; i < target.Length; i++) {
                 c = target[i];
-                if (c >= 'ぁ' && c <= 'ゔ') {
+                if (c >= 'ぁ' && c <= 'ヴ') {
                     c = (char)(c + 0x0060);
                 }
                 sb.Append(c);

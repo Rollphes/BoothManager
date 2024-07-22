@@ -10,7 +10,7 @@ namespace io.github.rollphes.boothManager.tabs {
         private static readonly VisualTreeAsset _loginFormExecutionStatusUxml = Resources.Load<VisualTreeAsset>("UI/Components/LoginFormExecutionStatus");
         private static readonly VisualTreeAsset _loginSuccessUxml = Resources.Load<VisualTreeAsset>("UI/Components/LoginSuccess");
 
-        internal override string Tooltip => "”FØ";
+        internal override string Tooltip => "èªè¨¼";
         internal override Texture2D TabIcon => Resources.Load<Texture2D>("UI/Icons/Login");
 
         protected override VisualTreeAsset InitTabUxml => Resources.Load<VisualTreeAsset>("UI/Tabs/AuthTabContent");
