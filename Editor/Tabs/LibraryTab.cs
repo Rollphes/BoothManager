@@ -12,7 +12,7 @@ namespace io.github.rollphes.boothManager.tabs {
     internal class LibraryTab : TabBase {
         private static readonly VisualTreeAsset _itemPanelUxml = Resources.Load<VisualTreeAsset>("UI/Components/ItemPanel");
         private static readonly VisualTreeAsset _itemListLineUxml = Resources.Load<VisualTreeAsset>("UI/Components/ItemListLine");
-        internal override string Tooltip => "ÉâÉCÉuÉâÉä";
+        internal override string Tooltip => "„É©„Ç§„Éñ„É©„É™";
         internal override Texture2D TabIcon => Resources.Load<Texture2D>("UI/Icons/Package");
 
         protected override VisualTreeAsset InitTabUxml => Resources.Load<VisualTreeAsset>("UI/Tabs/LibraryTabContent");
@@ -46,8 +46,8 @@ namespace io.github.rollphes.boothManager.tabs {
         private void ShowItemInfos() {
             var itemInfos = this._client.FetchItemInfos().Result;
             var textFilteredItemInfos = Array.FindAll(itemInfos, (itemInfo) => {
-                var normalizedItemName = itemInfo.Name.Normalize(NormalizationForm.FormKD).ToLower();
-                var normalizedFilter = this._textFilterField.value.Normalize(NormalizationForm.FormKD).ToLower();
+                var normalizedItemName = this.ConvertToSearchText(itemInfo.Name);
+                var normalizedFilter = this.ConvertToSearchText(this._textFilterField.value);
                 return Regex.IsMatch(normalizedItemName, normalizedFilter);
             });
 
@@ -106,6 +106,23 @@ namespace io.github.rollphes.boothManager.tabs {
                     }
                 };
             }
+        }
+
+        private string ConvertToSearchText(string input) {
+            // Convert to NFKD & Lower
+            var s = input.Normalize(NormalizationForm.FormKD).ToLower();
+            // Convert to Kana
+            StringBuilder sb = new StringBuilder();
+            char[] target = s.ToCharArray();
+            char c;
+            for (int i = 0; i < target.Length; i++) {
+                c = target[i];
+                if (c >= '„ÅÅ' && c <= '„Çî') {
+                    c = (char)(c + 0x0060);
+                }
+                sb.Append(c);
+            }
+            return sb.ToString();
         }
     }
 }
