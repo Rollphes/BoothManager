@@ -1,8 +1,11 @@
 using System;
+
+using io.github.rollphes.boothManager.client;
+
 using UnityEditor;
+
 using UnityEngine;
 using UnityEngine.UIElements;
-using io.github.rollphes.boothManager.client;
 
 namespace io.github.rollphes.boothManager.tabs {
     internal class AuthTab : TabBase {
@@ -21,23 +24,24 @@ namespace io.github.rollphes.boothManager.tabs {
 
         internal override void Show() {
             base.Show();
+
             this._loginForm = this._tabContent.Q<VisualElement>("LoginForm");
 
             if (this._client.IsDeployed == false) {
                 _loginFormExecutionStatusUxml.CloneTree(this._loginForm);
-                var statusLabel = this._loginForm.Q<Label>("ExecutionStatus");
-                var progressBar = this._loginForm.Q<ProgressBar>("Progress");
-                statusLabel.text = "Trying to auto sign in...";
 
+                var progressBar = this._loginForm.Q<ProgressBar>("Progress");
+                var statusLabel = this._loginForm.Q<Label>("ExecutionStatus");
+                statusLabel.text = "Trying to auto sign in...";
                 this._tabController._IsLock = true;
 
                 this._client.onDeployProgressing += async (deployStatusType) => {
                     switch (deployStatusType) {
-                        case DeployStatusType.BlowserDownloading:
-                            statusLabel.text = "Blowser Downloading...";
+                        case DeployStatusType.BrowserDownloading:
+                            statusLabel.text = "Browser Downloading...";
                             break;
-                        case DeployStatusType.BlowserActivating:
-                            statusLabel.text = "Blowser Activating...";
+                        case DeployStatusType.BrowserActivating:
+                            statusLabel.text = "Browser Activating...";
                             break;
                         case DeployStatusType.AutoLoginInProgress:
                             statusLabel.text = "Trying to auto sign in...";
@@ -53,6 +57,7 @@ namespace io.github.rollphes.boothManager.tabs {
                             } else {
                                 this.ShowLoginForm();
                             }
+
                             this._tabController._IsLock = false;
                             break;
                     }
@@ -101,21 +106,24 @@ namespace io.github.rollphes.boothManager.tabs {
 
             this._loginForm.Clear();
             _loginFormExecutionStatusUxml.CloneTree(this._loginForm);
-            var statusLabel = this._loginForm.Q<Label>("ExecutionStatus");
-            var progressBar = this._loginForm.Q<ProgressBar>("Progress");
-            statusLabel.text = "Trying to sign in...";
 
+            var progressBar = this._loginForm.Q<ProgressBar>("Progress");
+            var statusLabel = this._loginForm.Q<Label>("ExecutionStatus");
+            statusLabel.text = "Trying to sign in...";
 
             try {
                 await this._client.SignIn(email, password);
+
                 statusLabel.text = "Last page count fetching...";
                 await this._client.FetchItemInfos(false, (status, index, length) => {
                     this.FetchItemInfoOnProgressHandle(statusLabel, progressBar, status, index, length);
                 });
+
                 this.ShowLoginSuccess();
             } catch (Exception e) {
                 Debug.LogError(e.Message);
                 EditorUtility.DisplayDialog("Error logging in", "Invalid Username/Email or Password", "OK");
+
                 this.Show();
             }
         }
@@ -125,6 +133,7 @@ namespace io.github.rollphes.boothManager.tabs {
             progress.highValue = length;
             progress.lowValue = 0;
             progress.value = index;
+
             switch (status) {
                 case FetchItemInfoStatusType.ItemIdFetchingInLibrary:
                     label.text = "ItemId Fetching In Library page...";
@@ -139,7 +148,6 @@ namespace io.github.rollphes.boothManager.tabs {
                     progress.title = $"{index}/{length} item";
                     break;
             }
-
         }
     }
 }

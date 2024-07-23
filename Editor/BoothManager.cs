@@ -1,9 +1,11 @@
-using UnityEditor;
-using UnityEngine;
-using UnityEngine.UIElements;
 using io.github.rollphes.boothManager.client;
 using io.github.rollphes.boothManager.tabs;
+
+using UnityEditor;
 using UnityEditor.UIElements;
+
+using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace io.github.rollphes.boothManager {
     public class BoothManager : EditorWindow {
@@ -23,8 +25,10 @@ namespace io.github.rollphes.boothManager {
         [InitializeOnLoadMethod]
         private static async void Initialize() {
             _client ??= new Client();
-            if (_client.IsDeployed == false)
+            if (_client.IsDeployed == false) {
                 await _client.Deploy();
+            }
+
             EditorApplication.quitting += DestroyClient;
             AssemblyReloadEvents.beforeAssemblyReload += DestroyClient;
         }
@@ -36,8 +40,8 @@ namespace io.github.rollphes.boothManager {
         }
 
         public void CreateGUI() {
-            VisualElement root = this.rootVisualElement;
-            VisualTreeAsset mainUXML = Resources.Load<VisualTreeAsset>("UI/BoothManager");
+            var root = this.rootVisualElement;
+            var mainUXML = Resources.Load<VisualTreeAsset>("UI/BoothManager");
             mainUXML.CloneTree(root);
 
             var tabContent = root.Q<VisualElement>("TabContent");

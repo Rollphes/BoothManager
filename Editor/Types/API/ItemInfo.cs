@@ -1,11 +1,10 @@
+using System;
+using System.Globalization;
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace io.github.rollphes.boothManager.types.api {
-    using System;
-    using System.Globalization;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Converters;
-
     public partial class ItemInfo {
         [JsonProperty("description")]
         public string Description { get; set; }
@@ -246,11 +245,15 @@ namespace io.github.rollphes.boothManager.types.api {
     }
 
     public partial class ItemInfo {
-        public static ItemInfo FromJson(string json) => JsonConvert.DeserializeObject<ItemInfo>(json, Converter.Settings);
+        public static ItemInfo FromJson(string json) {
+            return JsonConvert.DeserializeObject<ItemInfo>(json, Converter.Settings);
+        }
     }
 
     public static class Serialize {
-        public static string ToJson(this ItemInfo self) => JsonConvert.SerializeObject(self, Converter.Settings);
+        public static string ToJson(this ItemInfo self) {
+            return JsonConvert.SerializeObject(self, Converter.Settings);
+        }
     }
 
     internal static class Converter {

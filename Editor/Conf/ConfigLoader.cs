@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+
 using PuppeteerSharp;
+
 using UnityEngine;
 
 namespace io.github.rollphes.boothManager.config {
@@ -19,8 +22,9 @@ namespace io.github.rollphes.boothManager.config {
         private List<JObject> _cookiesJson;
 
         internal void Deploy() {
-            if (!Directory.Exists(_cookieDirectoryPath))
+            if (!Directory.Exists(_cookieDirectoryPath)) {
                 Directory.CreateDirectory(_cookieDirectoryPath);
+            }
             this.SetCookiesJson();
         }
 
@@ -28,7 +32,6 @@ namespace io.github.rollphes.boothManager.config {
             var sectionObj = _configJson[section] ?? throw new Exception($"Section '{section}' not found in config file");
             var endpoints = sectionObj["endpoints"] ?? throw new Exception($"Endpoints not found in section '{section}'");
             var endpointInfo = endpoints[key] ?? throw new Exception($"Endpoint '{key}' not found in section '{section}'");
-
 
             var protocol = endpointInfo["protocol"]?.ToString() ?? _configJson["default"]["endpoint"]["protocol"].ToString();
             var domain = endpointInfo["domain"]?.ToString() ?? _configJson["default"]["endpoint"]["domain"].ToString();
@@ -45,14 +48,14 @@ namespace io.github.rollphes.boothManager.config {
 
             if (endpointInfo["queryParams"] != null) {
                 var queryParams = endpointInfo["queryParams"].ToObject<Dictionary<string, string>>();
-                var queryString = string.Join("&", queryParams.Select(kv => {
-                    var value = kv.Value;
+                var queryString = string.Join("&", queryParams.Select(queryParam => {
+                    var value = queryParam.Value;
                     if (args != null && value.Contains(":")) {
                         foreach (var arg in args) {
                             value = value.Replace($":{arg.Key}", arg.Value);
                         }
                     }
-                    return $"{kv.Key}={value}";
+                    return $"{queryParam.Key}={value}";
                 }));
                 url += $"?{queryString}";
             }
@@ -75,9 +78,7 @@ namespace io.github.rollphes.boothManager.config {
         }
 
         internal CookieParam[] GetCookieParams() {
-            if (this._cookiesJson == null)
-                return null;
-            return this._cookiesJson.Select(cookieJson =>
+            return this._cookiesJson?.Select(cookieJson =>
                 new CookieParam {
                     Name = cookieJson["Name"].ToString(),
                     Value = cookieJson["Value"].ToString(),
@@ -108,6 +109,5 @@ namespace io.github.rollphes.boothManager.config {
                 this._cookiesJson = JsonConvert.DeserializeObject<List<JObject>>(json);
             }
         }
-
     }
 }

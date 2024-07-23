@@ -1,6 +1,7 @@
+using io.github.rollphes.boothManager.client;
+
 using UnityEngine;
 using UnityEngine.UIElements;
-using io.github.rollphes.boothManager.client;
 
 namespace io.github.rollphes.boothManager.tabs {
     internal class DebugTab : TabBase {
@@ -13,6 +14,7 @@ namespace io.github.rollphes.boothManager.tabs {
 
         internal override void Show() {
             base.Show();
+
             var elementButton = this._tabContent.Q<VisualElement>("ElementButton");
             elementButton.RegisterCallback<ClickEvent>(async evt => {
                 Debug.Log("Element clicked!");
