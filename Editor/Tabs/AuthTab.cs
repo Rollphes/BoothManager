@@ -40,8 +40,6 @@ namespace io.github.rollphes.boothManager.tabs {
                         case DeployStatusType.BrowserDownloading:
                             statusLabel.text = "Browser Downloading...";
                             break;
-                        case DeployStatusType.BrowserActivating:
-                            statusLabel.text = "Browser Activating...";
                             break;
                         case DeployStatusType.AutoLoginInProgress:
                             statusLabel.text = "Trying to auto sign in...";

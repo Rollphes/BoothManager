@@ -13,13 +13,15 @@ using io.github.rollphes.boothManager.config;
 using io.github.rollphes.boothManager.types.api;
 
 using PuppeteerSharp;
+using PuppeteerSharp.BrowserData;
 
 using UnityEditor;
+
+using Debug = UnityEngine.Debug;
 
 namespace io.github.rollphes.boothManager.client {
     internal enum DeployStatusType {
         BrowserDownloading,
-        BrowserActivating,
         AutoLoginInProgress,
         Complete
     }
@@ -42,9 +44,9 @@ namespace io.github.rollphes.boothManager.client {
         internal bool IsLoggedIn { get; private set; } = false;
         internal string NickName { get; private set; }
 
-        private ItemInfo[] _itemInfos = null;
-        private IBrowser _browser = null;
         private readonly ConfigLoader _config;
+        private ItemInfo[] _itemInfos;
+        private InstalledBrowser _installedBrowser;
 
         internal Client() {
             this._config = new ConfigLoader();
@@ -54,17 +56,8 @@ namespace io.github.rollphes.boothManager.client {
             this._config.Deploy();
 
             this.onDeployProgressing?.Invoke(DeployStatusType.BrowserDownloading);
-            var browserFetcher = new BrowserFetcher(new BrowserFetcherOptions { Path = _browserPath });
-            var fetchedBrowser = await browserFetcher.DownloadAsync();
-
-            this.onDeployProgressing?.Invoke(DeployStatusType.BrowserActivating);
-            this._browser = await Puppeteer.LaunchAsync(new LaunchOptions {
-                ExecutablePath = fetchedBrowser.GetExecutablePath(),
-                HeadlessMode = HeadlessMode.True,
-                Args = new[] {
-                    $"--user-agent={_userAgent}"
-                }
-            });
+            var browserFetcher = new BrowserFetcher(new BrowserFetcherOptions { Path = _browserPath, Browser = SupportedBrowser.Chromium });
+            this._installedBrowser = await browserFetcher.DownloadAsync();
 
             this.onDeployProgressing?.Invoke(DeployStatusType.AutoLoginInProgress);
             await this.CheckAutoLogin();
@@ -73,19 +66,13 @@ namespace io.github.rollphes.boothManager.client {
             this.IsDeployed = true;
         }
 
-        internal async Task Destroy() {
-            if (this._browser != null) {
-                await this._browser.CloseAsync();
-            }
-        }
-
         internal async Task SignIn(string email, string password) {
-            this.ValidateBrowserInitialized();
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password)) {
                 throw new ArgumentException("Email and password are required.");
             }
 
-            var page = await this._browser.NewPageAsync();
+            var browser = await this.FetchBrowserAsync();
+            var page = (await browser.PagesAsync())[0];
             await page.GoToAsync(this._config.GetEndpointUrl("auth", "signIn"));
 
             var emailInputSelector = this._config.GetSelector("auth", "emailInput");
@@ -107,7 +94,8 @@ namespace io.github.rollphes.boothManager.client {
             var cookies = await page.GetCookiesAsync();
             this._config.SaveCookieParams(cookies);
 
-            await page.CloseAsync();
+            await page.DisposeAsync();
+            await browser.DisposeAsync();
         }
 
         internal void SignUp() {
@@ -122,8 +110,9 @@ namespace io.github.rollphes.boothManager.client {
 
         private async Task CheckAutoLogin() {
             var cookieParams = this._config.GetCookieParams();
-            var page = await this._browser.NewPageAsync();
             if (cookieParams != null) {
+                var browser = await this.FetchBrowserAsync();
+                var page = (await browser.PagesAsync())[0];
                 await page.SetCookieAsync(cookieParams);
                 await page.GoToAsync(this._config.GetEndpointUrl("home", "home"));
 
@@ -131,18 +120,18 @@ namespace io.github.rollphes.boothManager.client {
                 if (this.IsLoggedIn) {
                     this.NickName = await this.GetConfigElementPropertyAsync(page, "auth", "nickName", "innerText");
                 }
-
-                await page.CloseAsync();
+                await page.DisposeAsync();
+                await browser.DisposeAsync();
             }
         }
 
         private async Task<List<string>> FetchItemIds(Action<FetchItemInfoStatusType, int, int> onProgressing) {
-            this.ValidateBrowserInitialized();
             if (!this.IsLoggedIn) {
                 throw new InvalidOperationException("You are not logged in.");
             }
 
-            var page = await this._browser.NewPageAsync();
+            var browser = await this.FetchBrowserAsync();
+            var page = (await browser.PagesAsync())[0];
             await page.SetCookieAsync(this._config.GetCookieParams());
 
             var itemIds = new List<string>();
@@ -187,7 +176,8 @@ namespace io.github.rollphes.boothManager.client {
                 }
             }
 
-            await page.CloseAsync();
+            await page.DisposeAsync();
+            await browser.DisposeAsync();
 
             return itemIds;
         }
@@ -349,12 +339,6 @@ namespace io.github.rollphes.boothManager.client {
         }
 
         // utility methods
-        private void ValidateBrowserInitialized() {
-            if (this._browser == null) {
-                throw new InvalidOperationException("Browser is not initialized.");
-            }
-        }
-
         private async Task<string> GetConfigElementPropertyAsync(IPage page, string section, string key, string property) {
             var selector = this._config.GetSelector(section, key);
             var element = await page.QuerySelectorAsync(selector) ?? throw new InvalidOperationException($"Element is not initialized.({selector})");
@@ -381,6 +365,22 @@ namespace io.github.rollphes.boothManager.client {
             }
 
             return new HttpClient(handler);
+        }
+
+        private async Task<IBrowser> FetchBrowserAsync() {
+            Debug.Log("FetchBrowserAsync");
+            if (this._installedBrowser == null) {
+                throw new InvalidOperationException("Browser is not installed");
+            };
+            return await Puppeteer.LaunchAsync(new LaunchOptions {
+                ExecutablePath = this._installedBrowser.GetExecutablePath(),
+                HeadlessMode = HeadlessMode.True,
+                Args = new[] {
+                    "--disable-popup-blocking",
+                    "--single-process",
+                    $"--user-agent={_userAgent}",
+                }
+            });
         }
     }
 }

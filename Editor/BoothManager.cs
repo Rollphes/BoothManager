@@ -28,15 +28,6 @@ namespace io.github.rollphes.boothManager {
             if (_client.IsDeployed == false) {
                 await _client.Deploy();
             }
-
-            EditorApplication.quitting += DestroyClient;
-            AssemblyReloadEvents.beforeAssemblyReload += DestroyClient;
-        }
-
-        private static async void DestroyClient() {
-            if (_client != null) {
-                await _client.Destroy();
-            }
         }
 
         public void CreateGUI() {
