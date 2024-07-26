@@ -119,11 +119,8 @@ namespace io.github.rollphes.boothManager.tabs {
         }
 
         private string ConvertToSearchText(string input) {
-            // Escape
-            var escaped = Regex.Escape(input);
-
             // Convert to NFKD & Lower
-            var s = escaped.Normalize(NormalizationForm.FormKD).ToLower();
+            var s = input.Normalize(NormalizationForm.FormKD).ToLower();
 
             // Convert to Kana
             var sb = new StringBuilder();
@@ -136,7 +133,10 @@ namespace io.github.rollphes.boothManager.tabs {
                 }
                 sb.Append(c);
             }
-            return sb.ToString();
+            var kana = sb.ToString();
+
+            // Escape
+            return Regex.Escape(kana);
         }
     }
 }
