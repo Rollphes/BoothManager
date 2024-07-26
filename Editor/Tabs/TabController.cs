@@ -37,7 +37,7 @@ namespace io.github.rollphes.boothManager.tabs {
             foreach (var tab in this._tabs) {
                 var root = new VisualElement();
 
-                var tabIconUxml = (index++ == this._activeTabIndex) ? _tabIconActiveUxml : _tabIconPassiveUxml;
+                var tabIconUxml = (++index == this._activeTabIndex) ? _tabIconActiveUxml : _tabIconPassiveUxml;
                 tabIconUxml.CloneTree(root);
 
                 var tabIconElement = root.Q<VisualElement>("TabIcon");
