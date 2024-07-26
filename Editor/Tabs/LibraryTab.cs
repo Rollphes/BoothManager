@@ -23,10 +23,9 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private readonly Dictionary<string, Texture2D> _imageCache = new();
         private float _imageSize = 100f;
+        private string _searchText = "";
 
         private VisualElement _libraryContent;
-        private Slider _imageSizeSlider;
-        private ToolbarSearchField _textFilterField;
 
         public LibraryTab(Client client, TabController tabController, VisualElement tabContent) : base(client, tabController, tabContent) { }
 
@@ -35,12 +34,16 @@ namespace io.github.rollphes.boothManager.tabs {
 
             this._libraryContent = this._tabContent.Q<VisualElement>("LibraryContent");
 
-            this._textFilterField = this._tabContent.Q<ToolbarSearchField>("TextFilterField");
-            this._textFilterField.RegisterValueChangedCallback(evt => this.ShowItemInfos());
+            var textFilterField = this._tabContent.Q<ToolbarSearchField>("TextFilterField");
+            textFilterField.value = this._searchText;
+            textFilterField.RegisterValueChangedCallback(evt => {
+                this._searchText = evt.newValue;
+                this.ShowItemInfos();
+            });
 
-            this._imageSizeSlider = this._tabContent.Q<Slider>("ImageSizeSlider");
-            this._imageSizeSlider.SetValueWithoutNotify(this._imageSize);
-            this._imageSizeSlider.RegisterValueChangedCallback(evt => {
+            var imageSizeSlider = this._tabContent.Q<Slider>("ImageSizeSlider");
+            imageSizeSlider.SetValueWithoutNotify(this._imageSize);
+            imageSizeSlider.RegisterValueChangedCallback(evt => {
                 this._imageSize = evt.newValue;
                 this.ShowItemInfos();
             });
@@ -53,7 +56,7 @@ namespace io.github.rollphes.boothManager.tabs {
 
             var textFilteredItemInfos = Array.FindAll(itemInfos, (itemInfo) => {
                 var normalizedItemName = this.ConvertToSearchText(itemInfo.Name);
-                var normalizedFilter = this.ConvertToSearchText(this._textFilterField.value);
+                var normalizedFilter = this.ConvertToSearchText(this._searchText);
                 return Regex.IsMatch(normalizedItemName, normalizedFilter);
             });
 
