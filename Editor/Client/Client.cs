@@ -162,6 +162,8 @@ namespace io.github.rollphes.boothManager.client {
 
             foreach (var pageType in pageTypes) {
                 for (var i = 1; i <= lastPageCounts[pageType]; i++) {
+                    onProgressing?.Invoke(pageType == "library" ? FetchItemInfoStatusType.ItemIdFetchingInLibrary : FetchItemInfoStatusType.ItemIdFetchingInGift, i, lastPageCounts[pageType]);
+
                     var urlParams = new Dictionary<string, string> { { "pageNumber", i.ToString() } };
                     await page.GoToAsync(this._config.GetEndpointUrl("library", pageType, urlParams));
 
@@ -178,8 +180,6 @@ namespace io.github.rollphes.boothManager.client {
                         }
                     });
                     await Task.WhenAll(orderTasks);
-
-                    onProgressing?.Invoke(pageType == "library" ? FetchItemInfoStatusType.ItemIdFetchingInLibrary : FetchItemInfoStatusType.ItemIdFetchingInGift, i, lastPageCounts[pageType]);
 
                     if (orders.Length < 10) {
                         break;
