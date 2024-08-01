@@ -86,6 +86,7 @@ namespace io.github.rollphes.boothManager.client {
                 await page.WaitForNavigationAsync(new NavigationOptions { Timeout = 10 * 1000 });
             } catch (Exception) {
                 await page.CloseAsync();
+                await browser.DisposeAsync();
                 throw new Exception("Login Failed");
             }
 
@@ -380,11 +381,9 @@ namespace io.github.rollphes.boothManager.client {
             return await Puppeteer.LaunchAsync(new LaunchOptions {
                 ExecutablePath = this._installedBrowser.GetExecutablePath(),
                 HeadlessMode = HeadlessMode.True,
-                Headless = true,
                 Args = new[] {
-                    "--disable-popup-blocking",
-                    "--single-process",
-                    "--headless",
+                    "--window-size=1,1",
+                    "--window-position=-10000,-10000",
                     $"--user-agent={_userAgent}",
                 }
             });
