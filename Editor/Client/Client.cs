@@ -17,8 +17,6 @@ using PuppeteerSharp.BrowserData;
 
 using UnityEditor;
 
-using Debug = UnityEngine.Debug;
-
 namespace io.github.rollphes.boothManager.client {
     internal enum DeployStatusType {
         BrowserDownloading,
@@ -91,8 +89,10 @@ namespace io.github.rollphes.boothManager.client {
 
             this.IsLoggedIn = true;
             this.NickName = await this.GetConfigElementPropertyAsync(page, "auth", "nickName", "innerText");
-            var cookies = await page.GetCookiesAsync();
-            this._config.SaveCookieParams(cookies);
+
+            var client = await page.Target.CreateCDPSessionAsync(); // GetCookiesAsync does not work properly in Chromium
+            var response = await client.SendAsync("Network.getAllCookies");
+            this._config.SaveCookieParams(response);
 
             await page.DisposeAsync();
             await browser.DisposeAsync();
@@ -106,6 +106,7 @@ namespace io.github.rollphes.boothManager.client {
             this._config.DeleteCookieParams();
             this.IsLoggedIn = false;
             this.NickName = null;
+            this._itemInfos = null;
         }
 
         private async Task CheckAutoLogin() {
@@ -116,7 +117,10 @@ namespace io.github.rollphes.boothManager.client {
                 await page.SetCookieAsync(cookieParams);
                 await page.GoToAsync(this._config.GetEndpointUrl("home", "home"));
 
-                this.IsLoggedIn = await page.EvaluateExpressionAsync<bool>(this._config.GetScript("auth", "checkLoggedIn"));
+                var selector = this._config.GetSelector("home", "checkLoggedIn");
+                var element = await page.QuerySelectorAsync(selector);
+
+                this.IsLoggedIn = element == null;
                 if (this.IsLoggedIn) {
                     this.NickName = await this.GetConfigElementPropertyAsync(page, "auth", "nickName", "innerText");
                 }
@@ -368,16 +372,13 @@ namespace io.github.rollphes.boothManager.client {
         }
 
         private async Task<IBrowser> FetchBrowserAsync() {
-            Debug.Log("FetchBrowserAsync");
             if (this._installedBrowser == null) {
                 throw new InvalidOperationException("Browser is not installed");
             };
             return await Puppeteer.LaunchAsync(new LaunchOptions {
                 ExecutablePath = this._installedBrowser.GetExecutablePath(),
-                HeadlessMode = HeadlessMode.True,
+                HeadlessMode = HeadlessMode.False,
                 Args = new[] {
-                    "--disable-popup-blocking",
-                    "--single-process",
                     $"--user-agent={_userAgent}",
                 }
             });

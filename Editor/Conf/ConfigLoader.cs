@@ -63,13 +63,6 @@ namespace io.github.rollphes.boothManager.config {
             return url;
         }
 
-        internal string GetScript(string section, string key) {
-            var sectionObj = _configJson[section] ?? throw new Exception($"Section '{section}' not found in config file");
-            var scripts = sectionObj["scripts"] ?? throw new Exception($"Scripts not found in section '{section}'");
-            var script = scripts[key] ?? throw new Exception($"Script '{key}' not found in section '{section}'");
-            return script.ToString();
-        }
-
         internal string GetSelector(string section, string key) {
             var sectionObj = _configJson[section] ?? throw new Exception($"Section '{section}' not found in config file");
             var selectors = sectionObj["selectors"] ?? throw new Exception($"Selectors not found in section '{section}'");
@@ -80,17 +73,19 @@ namespace io.github.rollphes.boothManager.config {
         internal CookieParam[] GetCookieParams() {
             return this._cookiesJson?.Select(cookieJson =>
                 new CookieParam {
-                    Name = cookieJson["Name"].ToString(),
-                    Value = cookieJson["Value"].ToString(),
-                    Domain = cookieJson["Domain"].ToString(),
-                    Path = cookieJson["Path"].ToString(),
-                    Secure = Convert.ToBoolean(cookieJson["Secure"]),
-                    HttpOnly = Convert.ToBoolean(cookieJson["HttpOnly"])
+                    Name = cookieJson["name"].ToString(),
+                    Value = cookieJson["value"].ToString(),
+                    Domain = cookieJson["domain"].ToString(),
+                    Path = cookieJson["path"].ToString(),
+                    Secure = Convert.ToBoolean(cookieJson["secure"]),
+                    HttpOnly = Convert.ToBoolean(cookieJson["httpOnly"])
                 }).ToArray();
         }
 
-        internal void SaveCookieParams(CookieParam[] cookies) {
-            var json = JsonConvert.SerializeObject(cookies);
+        internal void SaveCookieParams(JObject response) {
+            var jsonObject = JObject.Parse(response.ToString());
+            var cookies = jsonObject["cookies"].ToObject<JArray>();
+            var json = cookies.ToString();
             File.WriteAllText(_cookieJsonPath, json);
 
             this.SetCookiesJson();

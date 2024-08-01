@@ -11,6 +11,9 @@
             "home": {
                 "path": "/"
             }
+        },
+        "selectors": {
+            "checkLoggedIn": ".before-signin"
         }
     },
     "auth": {
@@ -39,9 +42,6 @@
                     "_gl": "1*tye5an*_ga*NzMxMDk4NDI1LjE3MDcxODI0OTU.*_ga_RWT2QKJLDC*MTcwNzE4MjQ5NC4xLjEuMTcwNzE4MjUyNC4zMC4wLjA."
                 }
             }
-        },
-        "scripts": {
-            "checkLoggedIn": "document.querySelector('.before-signin') === null"
         },
         "selectors": {
             "emailInput": "input[type=\"text\"]",
