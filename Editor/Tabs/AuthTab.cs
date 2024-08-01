@@ -35,11 +35,10 @@ namespace io.github.rollphes.boothManager.tabs {
                 statusLabel.text = "Trying to auto sign in...";
                 this._tabController._IsLock = true;
 
-                this._client.onDeployProgressing += async (deployStatusType) => {
+                this._client.OnDeployProgressing += async (deployStatusType) => {
                     switch (deployStatusType) {
                         case DeployStatusType.BrowserDownloading:
                             statusLabel.text = "Browser Downloading...";
-                            break;
                             break;
                         case DeployStatusType.AutoLoginInProgress:
                             statusLabel.text = "Trying to auto sign in...";

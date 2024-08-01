@@ -39,7 +39,7 @@ namespace io.github.rollphes.boothManager.client {
         private static readonly string _fileLinkPattern = @"(?<=<a class=""nav-reverse"" href="")https://booth.pm/downloadables/.*?(?="">)";
         private static readonly string _sevenZipExePath = "Packages/io.github.rollphes.booth-manager/Runtime/7-Zip/7z.exe";
 
-        internal Action<DeployStatusType> onDeployProgressing;
+        internal Action<DeployStatusType> OnDeployProgressing;
         internal bool IsDeployed { get; private set; } = false;
         internal bool IsLoggedIn { get; private set; } = false;
         internal string NickName { get; private set; }
@@ -55,14 +55,14 @@ namespace io.github.rollphes.boothManager.client {
         internal async Task Deploy() {
             this._config.Deploy();
 
-            this.onDeployProgressing?.Invoke(DeployStatusType.BrowserDownloading);
+            this.OnDeployProgressing?.Invoke(DeployStatusType.BrowserDownloading);
             var browserFetcher = new BrowserFetcher(new BrowserFetcherOptions { Path = _browserPath, Browser = SupportedBrowser.Chromium });
             this._installedBrowser = await browserFetcher.DownloadAsync();
 
-            this.onDeployProgressing?.Invoke(DeployStatusType.AutoLoginInProgress);
+            this.OnDeployProgressing?.Invoke(DeployStatusType.AutoLoginInProgress);
             await this.CheckAutoLogin();
 
-            this.onDeployProgressing?.Invoke(DeployStatusType.Complete);
+            this.OnDeployProgressing?.Invoke(DeployStatusType.Complete);
             this.IsDeployed = true;
         }
 
@@ -382,6 +382,8 @@ namespace io.github.rollphes.boothManager.client {
                 HeadlessMode = HeadlessMode.True,
                 Headless = true,
                 Args = new[] {
+                    "--disable-popup-blocking",
+                    "--single-process",
                     "--headless",
                     $"--user-agent={_userAgent}",
                 }
