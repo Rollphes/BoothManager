@@ -13,6 +13,7 @@ namespace io.github.rollphes.boothManager {
         private static Client _client;
         private static readonly string _githubLink = "https://github.com/Rollphes/BoothManager";
         private static readonly string _changeLogLink = $"{_githubLink}/releases";
+        private static readonly VisualTreeAsset _mainUxml = Resources.Load<VisualTreeAsset>("UI/BoothManager");
 
         private TabController _tabController;
 
@@ -32,8 +33,7 @@ namespace io.github.rollphes.boothManager {
 
         public void CreateGUI() {
             var root = this.rootVisualElement;
-            var mainUXML = Resources.Load<VisualTreeAsset>("UI/BoothManager");
-            mainUXML.CloneTree(root);
+            _mainUxml.CloneTree(root);
 
             var tabContent = root.Q<VisualElement>("TabContent");
             var tabBar = root.Q<VisualElement>("TabBar");
