@@ -1,3 +1,5 @@
+#pragma warning disable CS0618
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -378,7 +380,9 @@ namespace io.github.rollphes.boothManager.client {
             return await Puppeteer.LaunchAsync(new LaunchOptions {
                 ExecutablePath = this._installedBrowser.GetExecutablePath(),
                 HeadlessMode = HeadlessMode.True,
+                Headless = true,
                 Args = new[] {
+                    "--headless",
                     $"--user-agent={_userAgent}",
                 }
             });
