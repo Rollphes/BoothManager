@@ -88,7 +88,7 @@ namespace io.github.rollphes.boothManager.types.api {
         public object Sound { get; set; }
 
         [JsonProperty("tags")]
-        public Parent[] Tags { get; set; }
+        public Tag[] Tags { get; set; }
 
         [JsonProperty("tag_banners")]
         public TagBanner[] TagBanners { get; set; }
@@ -111,13 +111,13 @@ namespace io.github.rollphes.boothManager.types.api {
         public string Name { get; set; }
 
         [JsonProperty("parent")]
-        public Parent Parent { get; set; }
+        public Tag Parent { get; set; }
 
         [JsonProperty("url")]
         public Uri Url { get; set; }
     }
 
-    public partial class Parent {
+    public partial class Tag {
         [JsonProperty("name")]
         public string Name { get; set; }
 
