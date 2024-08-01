@@ -377,7 +377,7 @@ namespace io.github.rollphes.boothManager.client {
             };
             return await Puppeteer.LaunchAsync(new LaunchOptions {
                 ExecutablePath = this._installedBrowser.GetExecutablePath(),
-                HeadlessMode = HeadlessMode.False,
+                HeadlessMode = HeadlessMode.True,
                 Args = new[] {
                     $"--user-agent={_userAgent}",
                 }
