@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement style="flex-grow: 0; height: 16px; flex-direction: row;">
+        <ui:Label tabindex="-1" parse-escape-sequences="true" display-tooltip-when-elided="true" name="IsSelected" style="font-size: 12px; -unity-text-align: middle-center; flex-shrink: 1; flex-grow: 0; height: auto; text-overflow: ellipsis; -unity-font-style: bold; white-space: nowrap; overflow: hidden; width: 24px; margin-right: 0; margin-left: 0; padding-right: 0; padding-left: 0; -unity-font: initial;" />
+        <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" name="TagName" style="font-size: 12px; -unity-text-align: middle-left; flex-shrink: 1; flex-grow: 1; height: auto; text-overflow: ellipsis; -unity-font-style: normal; white-space: nowrap; overflow: hidden; width: 100px; margin-right: 0; margin-left: 0; padding-right: 0; padding-left: 0;" />
+    </ui:VisualElement>
+</ui:UXML>

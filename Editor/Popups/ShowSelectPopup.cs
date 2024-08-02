@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-using UnityEditor;
+using io.github.rollphes.boothManager.client;
 
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -15,28 +15,23 @@ namespace io.github.rollphes.boothManager.popups {
         R18Only
     }
 
-    internal class ShowSelectPopup : PopupWindowContent {
-        internal Action<ArgLimitType> OnChangeArgLimit;
-        internal ArgLimitType ArgLimitType;
-
-        private static readonly VisualTreeAsset _initPopupUxml = Resources.Load<VisualTreeAsset>("UI/Popups/ShowSelectPopupContent");
+    internal class ShowSelectPopup : PopupBase {
         private static readonly Dictionary<ArgLimitType, string> _argLimitDropDownItems = new() {
             {ArgLimitType.All ,"すべて"},
             {ArgLimitType.AllAgesOnly , "全年齢のみ" },
             {ArgLimitType.R18Only,"R18商品のみ" }
         };
 
-        public ShowSelectPopup() { }
+        internal Action<ArgLimitType> OnChangeArgLimitType;
+        internal ArgLimitType ArgLimitType;
 
-        public override Vector2 GetWindowSize() {
-            return new Vector2(200, 100);
-        }
+        protected override VisualTreeAsset InitTagUxml => Resources.Load<VisualTreeAsset>("UI/Popups/ShowSelectPopupContent");
 
-        public override void OnGUI(Rect rect) { }
+        public ShowSelectPopup(Client client) : base(client) { }
 
         public override void OnOpen() {
+            base.OnOpen();
             var root = this.editorWindow.rootVisualElement;
-            _initPopupUxml.CloneTree(root);
 
             var argLimitDropDown = root.Q<DropdownField>("ArgLimitDropDown");
             argLimitDropDown.choices.Clear();
@@ -50,10 +45,8 @@ namespace io.github.rollphes.boothManager.popups {
             argLimitDropDown.RegisterValueChangedCallback(evt => {
                 var newArgLimitType = _argLimitDropDownItems.FindFirstKeyByValue(evt.newValue);
                 this.ArgLimitType = newArgLimitType;
-                this.OnChangeArgLimit?.Invoke(newArgLimitType);
+                this.OnChangeArgLimitType?.Invoke(newArgLimitType);
             });
         }
-
-        public override void OnClose() { }
     }
 }

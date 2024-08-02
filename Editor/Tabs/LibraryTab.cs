@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 using io.github.rollphes.boothManager.client;
 using io.github.rollphes.boothManager.popups;
 using io.github.rollphes.boothManager.types.api;
+using io.github.rollphes.boothManager.util;
 
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -39,7 +39,7 @@ namespace io.github.rollphes.boothManager.tabs {
 
         public LibraryTab(Client client, TabController tabController, VisualElement tabContent) : base(client, tabController, tabContent) {
             this._tagSelectPopup = new TagSelectPopup(client);
-            this._showSelectPopup = new ShowSelectPopup();
+            this._showSelectPopup = new ShowSelectPopup(client);
             this._classNameToPopupDictionary = new() {
                 { "TagSelectPopupButton", this._tagSelectPopup },
                 { "ShowSelectPopupButton", this._showSelectPopup }
@@ -74,7 +74,8 @@ namespace io.github.rollphes.boothManager.tabs {
                 };
             }
 
-            this._showSelectPopup.OnChangeArgLimit += (newType) => this.ShowItemInfos();
+            this._showSelectPopup.OnChangeArgLimitType += (_) => this.ShowItemInfos();
+            this._tagSelectPopup.OnChangeSelectedTag += (_) => this.ShowItemInfos();
 
             this.ShowItemInfos();
         }
@@ -133,8 +134,8 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private ItemInfo[] GetFilteredItemInfos(ItemInfo[] itemInfos) {
             var textFiltered = Array.FindAll(itemInfos, (itemInfo) => {
-                var normalizedItemName = this.ConvertToSearchText(itemInfo.Name);
-                var normalizedFilter = this.ConvertToSearchText(this._searchText);
+                var normalizedItemName = Util.ConvertToSearchText(itemInfo.Name);
+                var normalizedFilter = Util.ConvertToSearchText(this._searchText);
                 return Regex.IsMatch(normalizedItemName, normalizedFilter);
             });
 
@@ -145,7 +146,11 @@ namespace io.github.rollphes.boothManager.tabs {
                     return this._showSelectPopup.ArgLimitType == ArgLimitType.AllAgesOnly != isR18;
                 });
 
-            return argLimitFiltered;
+            var tagFiltered = Array.FindAll(argLimitFiltered, (itemInfo) => itemInfo.Tags.Any((tag) => {
+                return this._tagSelectPopup._selectedTagName == "" || tag.Name == this._tagSelectPopup._selectedTagName;
+            }));
+
+            return tagFiltered;
         }
 
         private void LoadImageFromUrlAsync(string url, Action<Texture2D> onCompleted) {
@@ -166,27 +171,6 @@ namespace io.github.rollphes.boothManager.tabs {
                     }
                 };
             }
-        }
-
-        private string ConvertToSearchText(string input) {
-            // Convert to NFKD & Lower
-            var s = input.Normalize(NormalizationForm.FormKD).ToLower();
-
-            // Convert to Kana
-            var sb = new StringBuilder();
-            var target = s.ToCharArray();
-            char c;
-            for (var i = 0; i < target.Length; i++) {
-                c = target[i];
-                if (c is >= 'ぁ' and <= 'ヴ') {
-                    c = (char)(c + 0x0060);
-                }
-                sb.Append(c);
-            }
-            var kana = sb.ToString();
-
-            // Escape
-            return Regex.Escape(kana);
         }
     }
 }
