@@ -37,7 +37,7 @@ namespace io.github.rollphes.boothManager.tabs {
         private readonly TagSelectPopup _tagSelectPopup;
         private readonly ShowSelectPopup _showSelectPopup;
 
-        private VisualElement _libraryContent;
+        private VisualElement _selectItem;
 
         public LibraryTab(Client client, TabController tabController, VisualElement tabContent) : base(client, tabController, tabContent) {
             this._tagSelectPopup = new TagSelectPopup(client);
@@ -51,7 +51,41 @@ namespace io.github.rollphes.boothManager.tabs {
         internal override async void Show() {
             base.Show();
 
-            this._libraryContent = this._tabContent.Q<VisualElement>("LibraryContent");
+            var itemDetailContent = this._tabContent.Q<VisualElement>("ItemDetailContent");
+
+            float initialWidth = 0;
+            var isDragging = false;
+            var initialMousePosition = Vector2.zero;
+            var mainContent = this._tabContent.Q<VisualElement>("MainContent");
+
+            var handle = this._tabContent.Q<VisualElement>("Handle");
+            handle.RegisterCallback<MouseDownEvent>(evt => {
+                isDragging = true;
+                initialWidth = itemDetailContent.resolvedStyle.width;
+                initialMousePosition = evt.mousePosition;
+                handle.CaptureMouse();
+            });
+            handle.RegisterCallback<MouseMoveEvent>(evt => {
+                if (isDragging) {
+                    var delta = initialMousePosition.x - evt.mousePosition.x;
+                    var newWidth = initialWidth + delta;
+                    if (newWidth < 50) {
+                        newWidth = 50;
+                    }
+                    if (newWidth > (mainContent.resolvedStyle.width - 50)) {
+                        newWidth = mainContent.resolvedStyle.width - 50;
+                    }
+                    itemDetailContent.style.width = newWidth;
+                    itemDetailContent.style.maxWidth = newWidth;
+                    itemDetailContent.style.minWidth = newWidth;
+                }
+            });
+            handle.RegisterCallback<MouseUpEvent>(evt => {
+                isDragging = false;
+                handle.ReleaseMouse();
+            });
+
+            this._selectItem = this._tabContent.Q<VisualElement>("SelectItem");
 
             var textFilterField = this._tabContent.Q<ToolbarSearchField>("TextFilterField");
             textFilterField.value = this._searchText;
@@ -84,18 +118,19 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private async Task ShowItemInfos() {
             if (!this._client.IsLoggedIn) {
-                var nonItemText = this._libraryContent.Q<Label>("NonItemText");
+                var nonItemText = this._selectItem.Q<Label>("NonItemText");
                 nonItemText.text = "ログイン後に使用可能です";
                 return;
             }
             var itemInfos = await this._client.FetchItemInfos();
             if (itemInfos == null || itemInfos.Length == 0) {
-                var nonItemText = this._libraryContent.Q<Label>("NonItemText");
+                var nonItemText = this._selectItem.Q<Label>("NonItemText");
                 nonItemText.text = "アイテムがありません";
             }
 
             var filteredItemInfos = this.GetFilteredItemInfos(itemInfos);
             var selectedItemName = this._tabContent.Q<Label>("SelectedItemName");
+            selectedItemName.text = this._selectedItemInfo?.Name ?? "";
 
             var scrollView = new ScrollView();
             scrollView.style.flexGrow = 1;
@@ -154,8 +189,8 @@ namespace io.github.rollphes.boothManager.tabs {
                 scrollView.Add(root);
             }
 
-            this._libraryContent.Clear();
-            this._libraryContent.Add(scrollView);
+            this._selectItem.Clear();
+            this._selectItem.Add(scrollView);
         }
 
         private ItemInfo[] GetFilteredItemInfos(ItemInfo[] itemInfos) {

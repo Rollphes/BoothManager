@@ -1,10 +1,10 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="True">
     <ui:VisualElement style="flex-grow: 0; background-color: rgb(250, 77, 79); -unity-background-scale-mode: stretch-to-fill; background-image: none; align-items: center; overflow: hidden;" />
     <ui:VisualElement style="flex-grow: 0;">
-        <ui:Label tabindex="-1" text="バグ一覧:&#10;  ・Googleでのログインが出来ません。&#10;  ・二段階認証/パスキー非対応&#10;  ・reCAPTCH未対応" parse-escape-sequences="true" display-tooltip-when-elided="true" />
+        <ui:Label tabindex="-1" text="バグ一覧:&#10;  ・Googleでのログインが出来ません。&#10;  ・二段階認証/パスキー非対応&#10;  ・reCAPTCH未対応" parse-escape-sequences="true" display-tooltip-when-elided="true" style="white-space: nowrap; text-overflow: clip; overflow: visible;" />
     </ui:VisualElement>
     <ui:VisualElement name="LoginForm" style="flex-grow: 1; align-items: center; overflow: hidden;" />
     <ui:VisualElement style="flex-grow: 1; justify-content: flex-end;">
-        <ui:Label tabindex="-1" text="BOOTHはピクシブ株式会社の登録商標です。&#10;BoothManagerは、ピクシブ株式会社及びBOOTHとは関係ありません。" parse-escape-sequences="true" display-tooltip-when-elided="true" />
+        <ui:Label tabindex="-1" text="BOOTHはピクシブ株式会社の登録商標です。&#10;BoothManagerは、ピクシブ株式会社及びBOOTHとは関係ありません。" parse-escape-sequences="true" display-tooltip-when-elided="true" style="white-space: normal;" />
     </ui:VisualElement>
 </ui:UXML>

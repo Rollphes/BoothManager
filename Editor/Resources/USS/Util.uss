@@ -1,3 +1,7 @@
 .MouseOver {
     background-color: darkblue;
 }
+
+.ResizeHorizontalCursor {
+    cursor: resize-horizontal;
+}
