@@ -94,6 +94,7 @@ namespace io.github.rollphes.boothManager.tabs {
             }
 
             var filteredItemInfos = this.GetFilteredItemInfos(itemInfos);
+            var selectedItemName = this._tabContent.Q<Label>("SelectedItemName");
 
             var scrollView = new ScrollView();
             scrollView.style.flexGrow = 1;
@@ -101,19 +102,30 @@ namespace io.github.rollphes.boothManager.tabs {
                 scrollView.contentContainer.style.flexDirection = FlexDirection.Row;
                 scrollView.contentContainer.style.flexWrap = Wrap.Wrap;
             }
+
+            var container = scrollView.Q<VisualElement>("unity-content-and-vertical-scroll-container");
             scrollView.RegisterCallback<ClickEvent>(evt => {
-                this._selectedItemInfo = null;
-                this.ShowItemInfos();
+                if (evt.target == scrollView.contentContainer || evt.target == container) {
+                    this._selectedItemInfo = null;
+                    selectedItemName.text = "";
+                    foreach (var child in scrollView.Children()) {
+                        child.RemoveFromClassList("MouseOver");
+                    }
+                }
             });
 
             foreach (var itemInfo in filteredItemInfos) {
                 var root = new VisualElement();
                 root.RegisterCallback<ClickEvent>(evt => {
                     this._selectedItemInfo = itemInfo;
-                    this.ShowItemInfos();
+                    selectedItemName.text = itemInfo.Name;
+                    foreach (var child in scrollView.Children()) {
+                        child.RemoveFromClassList("MouseOver");
+                    }
+                    root.AddToClassList("MouseOver");
                 });
 
-                if (itemInfo.Id == this._selectedItemInfo?.Id) {
+                if (this._selectedItemInfo?.Id == itemInfo.Id) {
                     root.AddToClassList("MouseOver");
                 }
 

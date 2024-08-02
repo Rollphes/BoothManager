@@ -17,7 +17,7 @@
     </ui:VisualElement>
     <uie:Toolbar>
         <uie:ToolbarSpacer />
-        <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" style="-unity-text-align: middle-left;" />
+        <ui:Label tabindex="-1" parse-escape-sequences="true" display-tooltip-when-elided="true" name="SelectedItemName" style="-unity-text-align: middle-left;" />
         <ui:VisualElement style="flex-grow: 1; align-items: center; flex-direction: row; justify-content: flex-end;">
             <ui:Slider picking-mode="Ignore" value="42" high-value="250" name="ImageSizeSlider" tabindex="100" low-value="0" style="width: 60px; min-width: 60px;" />
             <uie:ToolbarSpacer />
