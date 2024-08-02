@@ -1,5 +1,7 @@
 using io.github.rollphes.boothManager.client;
 
+using UnityEditor;
+
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -10,7 +12,7 @@ namespace io.github.rollphes.boothManager.tabs {
 
         protected override VisualTreeAsset InitTabUxml => Resources.Load<VisualTreeAsset>("UI/Tabs/DebugTabContent");
 
-        public DebugTab(Client client, TabController tabController, VisualElement tabContent) : base(client, tabController, tabContent) { }
+        public DebugTab(Client client, EditorWindow window, TabController tabController) : base(client, window, tabController) { }
 
         internal override void Show() {
             base.Show();

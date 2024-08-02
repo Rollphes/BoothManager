@@ -1,5 +1,7 @@
 using io.github.rollphes.boothManager.client;
 
+using UnityEditor;
+
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -16,10 +18,10 @@ namespace io.github.rollphes.boothManager.tabs {
         protected VisualElement _tabContent;
         protected TabController _tabController;
 
-        internal TabBase(Client client, TabController tabController, VisualElement tabContent) {
+        internal TabBase(Client client, EditorWindow window, TabController tabController) {
             this._client = client;
             this._tabController = tabController;
-            this._tabContent = tabContent;
+            this._tabContent = window.rootVisualElement.Q<VisualElement>("TabContent");
         }
 
         internal virtual void Show() {

@@ -2,6 +2,8 @@ using System;
 
 using io.github.rollphes.boothManager.client;
 
+using UnityEditor;
+
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -18,12 +20,12 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private int _activeTabIndex = 0;
 
-        internal TabController(Client client, VisualElement tabContent, VisualElement tabBar) {
-            this._tabBar = tabBar;
+        internal TabController(Client client, EditorWindow window) {
+            this._tabBar = window.rootVisualElement.Q<VisualElement>("TabBar");
             this._tabs = new TabBase[] {
-                new AuthTab(client, this, tabContent),
-                new LibraryTab(client, this, tabContent),
-                new DebugTab(client, this, tabContent)
+                new AuthTab(client, window, this),
+                new LibraryTab(client, window, this),
+                new DebugTab(client, window, this)
             };
 
             this._tabs[this._activeTabIndex].Show();

@@ -37,9 +37,9 @@ namespace io.github.rollphes.boothManager.tabs {
         private readonly TagSelectPopup _tagSelectPopup;
         private readonly ShowSelectPopup _showSelectPopup;
 
-        private VisualElement _selectItem;
+        private VisualElement _itemSelector;
 
-        public LibraryTab(Client client, TabController tabController, VisualElement tabContent) : base(client, tabController, tabContent) {
+        public LibraryTab(Client client, EditorWindow window, TabController tabController) : base(client, window, tabController) {
             this._tagSelectPopup = new TagSelectPopup(client);
             this._showSelectPopup = new ShowSelectPopup(client);
             this._classNameToPopupDictionary = new() {
@@ -57,6 +57,7 @@ namespace io.github.rollphes.boothManager.tabs {
             var isDragging = false;
             var initialMousePosition = Vector2.zero;
             var mainContent = this._tabContent.Q<VisualElement>("MainContent");
+            this._itemSelector = this._tabContent.Q<VisualElement>("ItemSelector");
 
             var handle = this._tabContent.Q<VisualElement>("Handle");
             handle.RegisterCallback<MouseDownEvent>(evt => {
@@ -84,8 +85,6 @@ namespace io.github.rollphes.boothManager.tabs {
                 isDragging = false;
                 handle.ReleaseMouse();
             });
-
-            this._selectItem = this._tabContent.Q<VisualElement>("SelectItem");
 
             var textFilterField = this._tabContent.Q<ToolbarSearchField>("TextFilterField");
             textFilterField.value = this._searchText;
@@ -118,13 +117,13 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private async Task ShowItemInfos() {
             if (!this._client.IsLoggedIn) {
-                var nonItemText = this._selectItem.Q<Label>("NonItemText");
+                var nonItemText = this._itemSelector.Q<Label>("NonItemText");
                 nonItemText.text = "ログイン後に使用可能です";
                 return;
             }
             var itemInfos = await this._client.FetchItemInfos();
             if (itemInfos == null || itemInfos.Length == 0) {
-                var nonItemText = this._selectItem.Q<Label>("NonItemText");
+                var nonItemText = this._itemSelector.Q<Label>("NonItemText");
                 nonItemText.text = "アイテムがありません";
             }
 
@@ -189,8 +188,8 @@ namespace io.github.rollphes.boothManager.tabs {
                 scrollView.Add(root);
             }
 
-            this._selectItem.Clear();
-            this._selectItem.Add(scrollView);
+            this._itemSelector.Clear();
+            this._itemSelector.Add(scrollView);
         }
 
         private ItemInfo[] GetFilteredItemInfos(ItemInfo[] itemInfos) {

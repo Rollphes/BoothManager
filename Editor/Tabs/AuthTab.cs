@@ -20,7 +20,7 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private VisualElement _loginForm;
 
-        public AuthTab(Client client, TabController tabController, VisualElement tabContent) : base(client, tabController, tabContent) { }
+        public AuthTab(Client client, EditorWindow window, TabController tabController) : base(client, window, tabController) { }
 
         internal override void Show() {
             base.Show();
