@@ -22,6 +22,8 @@ namespace io.github.rollphes.boothManager.tabs {
     internal class LibraryTab : TabBase {
         private static readonly VisualTreeAsset _itemPanelUxml = Resources.Load<VisualTreeAsset>("UI/Components/ItemPanel");
         private static readonly VisualTreeAsset _itemListLineUxml = Resources.Load<VisualTreeAsset>("UI/Components/ItemListLine");
+        private static readonly VisualTreeAsset _nonItemSelectUxml = Resources.Load<VisualTreeAsset>("UI/Components/NonItemSelect");
+        private static readonly VisualTreeAsset _itemDetailUxml = Resources.Load<VisualTreeAsset>("UI/Components/ItemDetail");
 
         internal override string Tooltip => "ライブラリ";
         internal override Texture2D TabIcon => Resources.Load<Texture2D>("UI/Icons/Package");
@@ -32,12 +34,14 @@ namespace io.github.rollphes.boothManager.tabs {
         private readonly Dictionary<string, Texture2D> _imageCache = new();
         private float _imageSize = 100f;
         private string _searchText = "";
+        private float _itemDetailContentWidth = 200f;
         private ItemInfo _selectedItemInfo = null;
 
         private readonly TagSelectPopup _tagSelectPopup;
         private readonly ShowSelectPopup _showSelectPopup;
 
-        private VisualElement _itemSelector;
+        private VisualElement _itemSelectorContent;
+        private VisualElement _itemDetailContent;
 
         public LibraryTab(Client client, BoothManager window, TabController tabController) : base(client, window, tabController) {
             this._tagSelectPopup = new TagSelectPopup(client);
@@ -51,18 +55,21 @@ namespace io.github.rollphes.boothManager.tabs {
         internal override async void Show() {
             base.Show();
 
-            var itemDetailContent = this._tabContent.Q<VisualElement>("ItemDetailContent");
+            this._itemDetailContent = this._tabContent.Q<VisualElement>("ItemDetailContent");
+            this._itemDetailContent.style.width = this._itemDetailContentWidth;
+            this._itemDetailContent.style.maxWidth = this._itemDetailContentWidth;
+            this._itemDetailContent.style.minWidth = this._itemDetailContentWidth;
 
             float itemDetailInitWidth = 0;
             var isDragging = false;
             var initMousePosition = Vector2.zero;
             var mainContent = this._tabContent.Q<VisualElement>("MainContent");
-            this._itemSelector = this._tabContent.Q<VisualElement>("ItemSelector");
+            this._itemSelectorContent = this._tabContent.Q<VisualElement>("ItemSelectorContent");
 
             var handle = this._tabContent.Q<VisualElement>("Handle");
             handle.RegisterCallback<MouseDownEvent>(evt => {
                 isDragging = true;
-                itemDetailInitWidth = itemDetailContent.resolvedStyle.width;
+                itemDetailInitWidth = this._itemDetailContent.resolvedStyle.width;
                 initMousePosition = evt.mousePosition;
                 handle.CaptureMouse();
             });
@@ -76,9 +83,10 @@ namespace io.github.rollphes.boothManager.tabs {
                     if (newWidth > (mainContent.resolvedStyle.width - 50)) {
                         newWidth = mainContent.resolvedStyle.width - 50;
                     }
-                    itemDetailContent.style.width = newWidth;
-                    itemDetailContent.style.maxWidth = newWidth;
-                    itemDetailContent.style.minWidth = newWidth;
+                    this._itemDetailContent.style.width = newWidth;
+                    this._itemDetailContent.style.maxWidth = newWidth;
+                    this._itemDetailContent.style.minWidth = newWidth;
+                    this._itemDetailContentWidth = newWidth;
                 }
             });
             handle.RegisterCallback<MouseUpEvent>(evt => {
@@ -87,14 +95,15 @@ namespace io.github.rollphes.boothManager.tabs {
             });
 
             mainContent.RegisterCallback<GeometryChangedEvent>(evt => {
-                if (this._itemSelector.resolvedStyle.width < 50) {
+                if (this._itemSelectorContent.resolvedStyle.width < 50) {
                     var newWidth = mainContent.resolvedStyle.width - 50;
                     if (newWidth < 50) {
                         newWidth = 50;
                     }
-                    itemDetailContent.style.width = newWidth;
-                    itemDetailContent.style.maxWidth = newWidth;
-                    itemDetailContent.style.minWidth = newWidth;
+                    this._itemDetailContent.style.width = newWidth;
+                    this._itemDetailContent.style.maxWidth = newWidth;
+                    this._itemDetailContent.style.minWidth = newWidth;
+                    this._itemDetailContentWidth = newWidth;
                 }
             });
 
@@ -125,17 +134,18 @@ namespace io.github.rollphes.boothManager.tabs {
             this._tagSelectPopup.OnChangeSelectedTag += async (_) => await this.ShowItemInfos();
 
             await this.ShowItemInfos();
+            this.ShowSelectItemDetail();
         }
 
         private async Task ShowItemInfos() {
             if (!this._client.IsLoggedIn) {
-                var nonItemText = this._itemSelector.Q<Label>("NonItemText");
+                var nonItemText = this._itemSelectorContent.Q<Label>("NonItemText");
                 nonItemText.text = "ログイン後に使用可能です";
                 return;
             }
             var itemInfos = await this._client.FetchItemInfos();
             if (itemInfos == null || itemInfos.Length == 0) {
-                var nonItemText = this._itemSelector.Q<Label>("NonItemText");
+                var nonItemText = this._itemSelectorContent.Q<Label>("NonItemText");
                 nonItemText.text = "アイテムがありません";
             }
 
@@ -158,6 +168,7 @@ namespace io.github.rollphes.boothManager.tabs {
                     foreach (var child in scrollView.Children()) {
                         child.RemoveFromClassList("MouseOver");
                     }
+                    this.ShowSelectItemDetail();
                 }
             });
 
@@ -170,10 +181,12 @@ namespace io.github.rollphes.boothManager.tabs {
                         child.RemoveFromClassList("MouseOver");
                     }
                     root.AddToClassList("MouseOver");
+                    this.ShowSelectItemDetail();
                 });
 
                 if (this._selectedItemInfo?.Id == itemInfo.Id) {
                     root.AddToClassList("MouseOver");
+                    this.ShowSelectItemDetail();
                 }
 
                 var itemUxml = (this._imageSize > 50) ? _itemPanelUxml : _itemListLineUxml;
@@ -200,8 +213,8 @@ namespace io.github.rollphes.boothManager.tabs {
                 scrollView.Add(root);
             }
 
-            this._itemSelector.Clear();
-            this._itemSelector.Add(scrollView);
+            this._itemSelectorContent.Clear();
+            this._itemSelectorContent.Add(scrollView);
         }
 
         private ItemInfo[] GetFilteredItemInfos(ItemInfo[] itemInfos) {
@@ -223,6 +236,34 @@ namespace io.github.rollphes.boothManager.tabs {
             }));
 
             return tagFiltered;
+        }
+
+        private void ShowSelectItemDetail() {
+            this._itemDetailContent.Clear();
+            if (this._selectedItemInfo == null) {
+                _nonItemSelectUxml.CloneTree(this._itemDetailContent);
+                return;
+            }
+            _itemDetailUxml.CloneTree(this._itemDetailContent);
+
+            var itemCategory = this._itemDetailContent.Q<Label>("ItemCategory");
+            itemCategory.text = $"{this._selectedItemInfo.Category.Parent.Name} > {this._selectedItemInfo.Category.Name}";
+
+            var shopIcon = this._itemDetailContent.Q<VisualElement>("ShopIcon");
+            this.LoadImageFromUrlAsync(this._selectedItemInfo.Shop.ThumbnailUrl.ToString(), (texture) => {
+                if (texture != null) {
+                    shopIcon.style.backgroundImage = new StyleBackground(texture);
+                }
+            });
+
+            var shopName = this._itemDetailContent.Q<Label>("ShopName");
+            shopName.text = this._selectedItemInfo.Shop.Name;
+
+            var itemName = this._itemDetailContent.Q<Label>("ItemName");
+            itemName.text = this._selectedItemInfo.Name;
+
+            var wishListsCount = this._itemDetailContent.Q<Label>("WishListsCount");
+            wishListsCount.text = this._selectedItemInfo.WishListsCount.ToString();
         }
 
         private void LoadImageFromUrlAsync(string url, Action<Texture2D> onCompleted) {

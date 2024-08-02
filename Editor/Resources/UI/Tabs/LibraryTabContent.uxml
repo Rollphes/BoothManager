@@ -12,7 +12,7 @@
     </uie:Toolbar>
     <ui:VisualElement name="MainContent" style="flex-grow: 1; flex-direction: row;">
         <ui:VisualElement style="flex-grow: 1; width: auto; max-width: none; min-width: auto;">
-            <ui:VisualElement name="ItemSelector" style="flex-grow: 1; max-width: none; width: auto; min-width: auto;">
+            <ui:VisualElement name="ItemSelectorContent" style="flex-grow: 1; max-width: none; width: auto; min-width: auto;">
                 <ui:VisualElement style="flex-grow: 1; justify-content: center; align-items: center;">
                     <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NonItemText" />
                 </ui:VisualElement>
