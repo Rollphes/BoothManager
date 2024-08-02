@@ -14,7 +14,6 @@ namespace io.github.rollphes.boothManager {
         private static readonly string _changeLogLink = $"{_githubLink}/releases";
 
         private TabController _tabController;
-        private Vector2 _previousSize;
 
         [MenuItem("BoothManager/MainWindow")]
         public static void ShowWindow() {
@@ -31,8 +30,6 @@ namespace io.github.rollphes.boothManager {
         }
 
         public void CreateGUI() {
-            this._previousSize = new Vector2(this.position.width, this.position.height);
-
             var root = this.rootVisualElement;
             var mainUXML = Resources.Load<VisualTreeAsset>("UI/BoothManager");
             mainUXML.CloneTree(root);
