@@ -1,5 +1,3 @@
-using System;
-
 using io.github.rollphes.boothManager.client;
 using io.github.rollphes.boothManager.tabs;
 
@@ -14,8 +12,6 @@ namespace io.github.rollphes.boothManager {
         private static Client _client;
         private static readonly string _githubLink = "https://github.com/Rollphes/BoothManager";
         private static readonly string _changeLogLink = $"{_githubLink}/releases";
-
-        internal Action<Vector2> OnWindowSizeChanged;
 
         private TabController _tabController;
         private Vector2 _previousSize;
@@ -48,15 +44,6 @@ namespace io.github.rollphes.boothManager {
             githubLink.clicked += () => System.Diagnostics.Process.Start(_githubLink);
 
             this._tabController = new TabController(_client, this);
-        }
-
-        private void Update() {
-            var currentSize = new Vector2(this.position.width, this.position.height);
-
-            if (currentSize != this._previousSize) {
-                this.OnWindowSizeChanged?.Invoke(currentSize);
-                this._previousSize = currentSize;
-            }
         }
     }
 }

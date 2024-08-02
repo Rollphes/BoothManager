@@ -24,6 +24,6 @@
             </uie:Toolbar>
         </ui:VisualElement>
         <ui:VisualElement name="Handle" class="ResizeHorizontalCursor" style="flex-grow: 0; width: 5px; max-width: 5px; min-width: 5px; background-color: rgb(43, 41, 43);" />
-        <ui:VisualElement name="ItemDetailContent" style="flex-grow: 1; width: 200px; min-width: 200px; max-width: 200px; background-color: rgb(43, 41, 43);" />
+        <ui:VisualElement name="ItemDetailContent" style="flex-grow: 1; width: 200px; min-width: 200px; max-width: 200px; background-color: rgb(43, 41, 43); flex-shrink: 1;" />
     </ui:VisualElement>
 </ui:UXML>

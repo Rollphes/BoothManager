@@ -39,7 +39,7 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private VisualElement _itemSelector;
 
-        public LibraryTab(Client client, EditorWindow window, TabController tabController) : base(client, window, tabController) {
+        public LibraryTab(Client client, BoothManager window, TabController tabController) : base(client, window, tabController) {
             this._tagSelectPopup = new TagSelectPopup(client);
             this._showSelectPopup = new ShowSelectPopup(client);
             this._classNameToPopupDictionary = new() {
@@ -53,23 +53,23 @@ namespace io.github.rollphes.boothManager.tabs {
 
             var itemDetailContent = this._tabContent.Q<VisualElement>("ItemDetailContent");
 
-            float initialWidth = 0;
+            float itemDetailInitWidth = 0;
             var isDragging = false;
-            var initialMousePosition = Vector2.zero;
+            var initMousePosition = Vector2.zero;
             var mainContent = this._tabContent.Q<VisualElement>("MainContent");
             this._itemSelector = this._tabContent.Q<VisualElement>("ItemSelector");
 
             var handle = this._tabContent.Q<VisualElement>("Handle");
             handle.RegisterCallback<MouseDownEvent>(evt => {
                 isDragging = true;
-                initialWidth = itemDetailContent.resolvedStyle.width;
-                initialMousePosition = evt.mousePosition;
+                itemDetailInitWidth = itemDetailContent.resolvedStyle.width;
+                initMousePosition = evt.mousePosition;
                 handle.CaptureMouse();
             });
             handle.RegisterCallback<MouseMoveEvent>(evt => {
                 if (isDragging) {
-                    var delta = initialMousePosition.x - evt.mousePosition.x;
-                    var newWidth = initialWidth + delta;
+                    var delta = initMousePosition.x - evt.mousePosition.x;
+                    var newWidth = itemDetailInitWidth + delta;
                     if (newWidth < 50) {
                         newWidth = 50;
                     }
@@ -84,6 +84,18 @@ namespace io.github.rollphes.boothManager.tabs {
             handle.RegisterCallback<MouseUpEvent>(evt => {
                 isDragging = false;
                 handle.ReleaseMouse();
+            });
+
+            mainContent.RegisterCallback<GeometryChangedEvent>(evt => {
+                if (this._itemSelector.resolvedStyle.width < 50) {
+                    var newWidth = mainContent.resolvedStyle.width - 50;
+                    if (newWidth < 50) {
+                        newWidth = 50;
+                    }
+                    itemDetailContent.style.width = newWidth;
+                    itemDetailContent.style.maxWidth = newWidth;
+                    itemDetailContent.style.minWidth = newWidth;
+                }
             });
 
             var textFilterField = this._tabContent.Q<ToolbarSearchField>("TextFilterField");
