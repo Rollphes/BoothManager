@@ -48,7 +48,7 @@ namespace io.github.rollphes.boothManager.config {
 
             if (endpointInfo["queryParams"] != null) {
                 var queryParams = endpointInfo["queryParams"].ToObject<Dictionary<string, string>>();
-                var queryString = string.Join("&", queryParams.Select(queryParam => {
+                var queryString = string.Join("&", queryParams.Select((queryParam) => {
                     var value = queryParam.Value;
                     if (args != null && value.Contains(":")) {
                         foreach (var arg in args) {
@@ -71,7 +71,7 @@ namespace io.github.rollphes.boothManager.config {
         }
 
         internal CookieParam[] GetCookieParams() {
-            return this._cookiesJson?.Select(cookieJson =>
+            return this._cookiesJson?.Select((cookieJson) =>
                 new CookieParam {
                     Name = cookieJson["name"].ToString(),
                     Value = cookieJson["value"].ToString(),

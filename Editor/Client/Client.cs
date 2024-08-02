@@ -168,7 +168,7 @@ namespace io.github.rollphes.boothManager.client {
                         break;
                     }
 
-                    var orderTasks = orders.Select(async order => {
+                    var orderTasks = orders.Select(async (order) => {
                         var itemUrlLink = await this.GetConfigElementPropertyAsync(order, "library", "itemLink", "href");
                         var itemId = itemUrlLink.Split("/").Last();
                         if (!itemIds.Contains(itemId)) {

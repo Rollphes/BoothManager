@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 using io.github.rollphes.boothManager.client;
 using io.github.rollphes.boothManager.popups;
@@ -47,23 +48,23 @@ namespace io.github.rollphes.boothManager.tabs {
             };
         }
 
-        internal override void Show() {
+        internal override async void Show() {
             base.Show();
 
             this._libraryContent = this._tabContent.Q<VisualElement>("LibraryContent");
 
             var textFilterField = this._tabContent.Q<ToolbarSearchField>("TextFilterField");
             textFilterField.value = this._searchText;
-            textFilterField.RegisterValueChangedCallback(evt => {
+            textFilterField.RegisterValueChangedCallback(async (evt) => {
                 this._searchText = evt.newValue;
-                this.ShowItemInfos();
+                await this.ShowItemInfos();
             });
 
             var imageSizeSlider = this._tabContent.Q<Slider>("ImageSizeSlider");
             imageSizeSlider.SetValueWithoutNotify(this._imageSize);
-            imageSizeSlider.RegisterValueChangedCallback(evt => {
+            imageSizeSlider.RegisterValueChangedCallback(async (evt) => {
                 this._imageSize = evt.newValue;
-                this.ShowItemInfos();
+                await this.ShowItemInfos();
             });
 
             foreach (var (className, popupContent) in this._classNameToPopupDictionary) {
@@ -75,19 +76,19 @@ namespace io.github.rollphes.boothManager.tabs {
                 };
             }
 
-            this._showSelectPopup.OnChangeArgLimitType += (_) => this.ShowItemInfos();
-            this._tagSelectPopup.OnChangeSelectedTag += (_) => this.ShowItemInfos();
+            this._showSelectPopup.OnChangeArgLimitType += async (_) => await this.ShowItemInfos();
+            this._tagSelectPopup.OnChangeSelectedTag += async (_) => await this.ShowItemInfos();
 
-            this.ShowItemInfos();
+            await this.ShowItemInfos();
         }
 
-        private void ShowItemInfos() {
+        private async Task ShowItemInfos() {
             if (!this._client.IsLoggedIn) {
                 var nonItemText = this._libraryContent.Q<Label>("NonItemText");
                 nonItemText.text = "ログイン後に使用可能です";
                 return;
             }
-            var itemInfos = this._client.FetchItemInfos().Result;
+            var itemInfos = await this._client.FetchItemInfos();
             if (itemInfos == null || itemInfos.Length == 0) {
                 var nonItemText = this._libraryContent.Q<Label>("NonItemText");
                 nonItemText.text = "アイテムがありません";
@@ -104,7 +105,7 @@ namespace io.github.rollphes.boothManager.tabs {
             }
 
             var container = scrollView.Q<VisualElement>("unity-content-and-vertical-scroll-container");
-            scrollView.RegisterCallback<ClickEvent>(evt => {
+            scrollView.RegisterCallback<ClickEvent>((evt) => {
                 if (evt.target == scrollView.contentContainer || evt.target == container) {
                     this._selectedItemInfo = null;
                     selectedItemName.text = "";
@@ -116,7 +117,7 @@ namespace io.github.rollphes.boothManager.tabs {
 
             foreach (var itemInfo in filteredItemInfos) {
                 var root = new VisualElement();
-                root.RegisterCallback<ClickEvent>(evt => {
+                root.RegisterCallback<ClickEvent>((evt) => {
                     this._selectedItemInfo = itemInfo;
                     selectedItemName.text = itemInfo.Name;
                     foreach (var child in scrollView.Children()) {
@@ -183,7 +184,7 @@ namespace io.github.rollphes.boothManager.tabs {
                 onCompleted?.Invoke(this._imageCache[url]);
             } else {
                 var request = UnityWebRequestTexture.GetTexture(url);
-                request.SendWebRequest().completed += operation => {
+                request.SendWebRequest().completed += (operation) => {
                     if (request.result == UnityWebRequest.Result.Success) {
                         var texture = DownloadHandlerTexture.GetContent(request);
                         onCompleted?.Invoke(texture);

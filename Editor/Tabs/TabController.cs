@@ -43,9 +43,9 @@ namespace io.github.rollphes.boothManager.tabs {
                 var tabIconElement = root.Q<VisualElement>("TabIcon");
                 tabIconElement.style.backgroundImage = new Background { texture = tab.TabIcon };
                 tabIconElement.tooltip = tab.Tooltip;
-                tabIconElement.RegisterCallback<ClickEvent>(evt => {
+                tabIconElement.RegisterCallback<ClickEvent>((evt) => {
                     if (!this._IsLock) {
-                        this._activeTabIndex = Array.FindIndex(this._tabs, t => t.GetType() == tab.GetType());
+                        this._activeTabIndex = Array.FindIndex(this._tabs, (t) => t.GetType() == tab.GetType());
 
                         this.ShowTabBar();
                         tab.Show();

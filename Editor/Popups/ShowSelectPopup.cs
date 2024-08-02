@@ -42,7 +42,7 @@ namespace io.github.rollphes.boothManager.popups {
                 argLimitDropDown.choices.Add(item.Value);
             }
 
-            argLimitDropDown.RegisterValueChangedCallback(evt => {
+            argLimitDropDown.RegisterValueChangedCallback((evt) => {
                 var newArgLimitType = _argLimitDropDownItems.FindFirstKeyByValue(evt.newValue);
                 this.ArgLimitType = newArgLimitType;
                 this.OnChangeArgLimitType?.Invoke(newArgLimitType);

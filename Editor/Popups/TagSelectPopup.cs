@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 using io.github.rollphes.boothManager.client;
 using io.github.rollphes.boothManager.types.api;
@@ -30,26 +31,26 @@ namespace io.github.rollphes.boothManager.popups {
             return new Vector2(200, 500);
         }
 
-        public override void OnOpen() {
+        public override async void OnOpen() {
             base.OnOpen();
             var root = this.editorWindow.rootVisualElement;
 
             var tagFilterField = root.Q<ToolbarSearchField>("TagFilterField");
             tagFilterField.value = this._searchText;
-            tagFilterField.RegisterValueChangedCallback(evt => {
+            tagFilterField.RegisterValueChangedCallback(async (evt) => {
                 this._searchText = evt.newValue;
-                this.ShowTags();
+                await this.ShowTags();
             });
 
             this._tagListView = root.Q<ScrollView>("TagListView");
 
-            this.ShowTags();
+            await this.ShowTags();
         }
 
-        private void ShowTags() {
+        private async Task ShowTags() {
             this._tagListView.Clear();
 
-            var itemInfos = this._client.FetchItemInfos().Result;
+            var itemInfos = await this._client.FetchItemInfos();
             if (itemInfos == null || itemInfos.Length == 0) {
                 return;
             }
@@ -59,16 +60,16 @@ namespace io.github.rollphes.boothManager.popups {
             foreach (var tag in filteredTags) {
                 var root = new VisualElement();
                 _tagListLineUxml.CloneTree(root);
-                root.RegisterCallback<MouseOverEvent>(evt => {
+                root.RegisterCallback<MouseOverEvent>((evt) => {
                     root.AddToClassList("MouseOver");
                 });
-                root.RegisterCallback<MouseLeaveEvent>(evt => {
+                root.RegisterCallback<MouseLeaveEvent>((evt) => {
                     root.RemoveFromClassList("MouseOver");
                 });
-                root.RegisterCallback<ClickEvent>(evt => {
+                root.RegisterCallback<ClickEvent>(async (evt) => {
                     this._selectedTagName = this._selectedTagName == tag.Name ? "" : tag.Name;
                     this.OnChangeSelectedTag?.Invoke(tag);
-                    this.ShowTags();
+                    await this.ShowTags();
                 });
 
                 var tagName = root.Q<Label>("TagName");
@@ -82,7 +83,7 @@ namespace io.github.rollphes.boothManager.popups {
         }
 
         private Tag[] GetFilteredTags(ItemInfo[] itemInfos) {
-            var tags = itemInfos.SelectMany(itemInfo => itemInfo.Tags).ToArray();
+            var tags = itemInfos.SelectMany((itemInfo) => itemInfo.Tags).ToArray();
             var tagList = new List<Tag>();
 
             foreach (var tag in tags) {
