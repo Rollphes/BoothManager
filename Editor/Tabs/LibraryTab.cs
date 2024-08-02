@@ -31,6 +31,7 @@ namespace io.github.rollphes.boothManager.tabs {
         private readonly Dictionary<string, Texture2D> _imageCache = new();
         private float _imageSize = 100f;
         private string _searchText = "";
+        private ItemInfo _selectedItemInfo = null;
 
         private readonly TagSelectPopup _tagSelectPopup;
         private readonly ShowSelectPopup _showSelectPopup;
@@ -95,14 +96,26 @@ namespace io.github.rollphes.boothManager.tabs {
             var filteredItemInfos = this.GetFilteredItemInfos(itemInfos);
 
             var scrollView = new ScrollView();
-            scrollView.contentContainer.style.flexGrow = 0;
+            scrollView.style.flexGrow = 1;
             if (this._imageSize > 50) {
                 scrollView.contentContainer.style.flexDirection = FlexDirection.Row;
                 scrollView.contentContainer.style.flexWrap = Wrap.Wrap;
             }
+            scrollView.RegisterCallback<ClickEvent>(evt => {
+                this._selectedItemInfo = null;
+                this.ShowItemInfos();
+            });
 
             foreach (var itemInfo in filteredItemInfos) {
                 var root = new VisualElement();
+                root.RegisterCallback<ClickEvent>(evt => {
+                    this._selectedItemInfo = itemInfo;
+                    this.ShowItemInfos();
+                });
+
+                if (itemInfo.Id == this._selectedItemInfo?.Id) {
+                    root.AddToClassList("MouseOver");
+                }
 
                 var itemUxml = (this._imageSize > 50) ? _itemPanelUxml : _itemListLineUxml;
                 itemUxml.CloneTree(root);

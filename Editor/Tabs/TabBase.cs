@@ -5,6 +5,8 @@ using UnityEngine.UIElements;
 
 namespace io.github.rollphes.boothManager.tabs {
     internal abstract class TabBase {
+        private static readonly StyleSheet _styleSheet = Resources.Load<StyleSheet>("USS/Util");
+
         internal abstract Texture2D TabIcon { get; }
         internal abstract string Tooltip { get; }
 
@@ -23,6 +25,7 @@ namespace io.github.rollphes.boothManager.tabs {
         internal virtual void Show() {
             this._tabContent.Clear();
             this.InitTabUxml.CloneTree(this._tabContent);
+            this._tabContent.styleSheets.Add(_styleSheet);
         }
     }
 }
