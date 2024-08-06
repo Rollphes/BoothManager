@@ -1,9 +1,9 @@
-using io.github.rollphes.boothManager.client;
+using io.github.rollphes.epmanager.client;
 
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace io.github.rollphes.boothManager.tabs {
+namespace io.github.rollphes.epmanager.tabs {
     internal abstract class TabBase {
         private static readonly StyleSheet _styleSheet = Resources.Load<StyleSheet>("USS/Util");
 
@@ -13,11 +13,11 @@ namespace io.github.rollphes.boothManager.tabs {
         protected abstract VisualTreeAsset InitTabUxml { get; }
 
         protected Client _client;
-        protected BoothManager _window;
+        protected MainWindow _window;
         protected VisualElement _tabContent;
         protected TabController _tabController;
 
-        internal TabBase(Client client, BoothManager window, TabController tabController) {
+        internal TabBase(Client client, MainWindow window, TabController tabController) {
             this._client = client;
             this._window = window;
             this._tabController = tabController;

@@ -1,11 +1,11 @@
-using io.github.rollphes.boothManager.client;
+using io.github.rollphes.epmanager.client;
 
 using UnityEditor;
 
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace io.github.rollphes.boothManager.popups {
+namespace io.github.rollphes.epmanager.popups {
     internal abstract class PopupBase : PopupWindowContent {
         private static readonly StyleSheet _styleSheet = Resources.Load<StyleSheet>("USS/Util");
 

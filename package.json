@@ -1,7 +1,7 @@
 {
-  "name": "io.github.rollphes.booth-manager",
-  "description": "this packaging α version",
-  "displayName": "BoothManager",
+  "name": "io.github.rollphes.epmanager",
+  "description": "this packaging \u03b1 version",
+  "displayName": "EPManager",
   "version": "0.0.1",
   "unity": "2018.1",
   "author": {

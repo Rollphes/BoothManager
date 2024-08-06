@@ -4,16 +4,16 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-using io.github.rollphes.boothManager.client;
-using io.github.rollphes.boothManager.types.api;
-using io.github.rollphes.boothManager.util;
+using io.github.rollphes.epmanager.client;
+using io.github.rollphes.epmanager.types.api;
+using io.github.rollphes.epmanager.utility;
 
 using UnityEditor.UIElements;
 
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace io.github.rollphes.boothManager.popups {
+namespace io.github.rollphes.epmanager.popups {
     internal class TagSelectPopup : PopupBase {
         private static readonly VisualTreeAsset _tagListLineUxml = Resources.Load<VisualTreeAsset>("UI/Components/TagListLine");
 
@@ -93,8 +93,8 @@ namespace io.github.rollphes.boothManager.popups {
             }
 
             return Array.FindAll(tagList.ToArray(), (tag) => {
-                var normalizedItemName = Util.ConvertToSearchText(tag.Name);
-                var normalizedFilter = Util.ConvertToSearchText(this._searchText);
+                var normalizedItemName = Utility.ConvertToSearchText(tag.Name);
+                var normalizedFilter = Utility.ConvertToSearchText(this._searchText);
                 return Regex.IsMatch(normalizedItemName, normalizedFilter);
             });
         }

@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-using io.github.rollphes.boothManager.client;
-using io.github.rollphes.boothManager.popups;
-using io.github.rollphes.boothManager.types.api;
-using io.github.rollphes.boothManager.util;
+using io.github.rollphes.epmanager.client;
+using io.github.rollphes.epmanager.popups;
+using io.github.rollphes.epmanager.types.api;
+using io.github.rollphes.epmanager.utility;
 
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -18,7 +18,7 @@ using UnityEngine.UIElements;
 
 using PopupWindow = UnityEditor.PopupWindow;
 
-namespace io.github.rollphes.boothManager.tabs {
+namespace io.github.rollphes.epmanager.tabs {
     internal class LibraryTab : TabBase {
         private static readonly VisualTreeAsset _itemPanelUxml = Resources.Load<VisualTreeAsset>("UI/Components/ItemPanel");
         private static readonly VisualTreeAsset _itemListLineUxml = Resources.Load<VisualTreeAsset>("UI/Components/ItemListLine");
@@ -43,7 +43,7 @@ namespace io.github.rollphes.boothManager.tabs {
         private VisualElement _itemSelectorContent;
         private VisualElement _itemDetailContent;
 
-        public LibraryTab(Client client, BoothManager window, TabController tabController) : base(client, window, tabController) {
+        public LibraryTab(Client client, MainWindow window, TabController tabController) : base(client, window, tabController) {
             this._tagSelectPopup = new TagSelectPopup(client);
             this._showSelectPopup = new ShowSelectPopup(client);
             this._classNameToPopupDictionary = new() {
@@ -219,8 +219,8 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private ItemInfo[] GetFilteredItemInfos(ItemInfo[] itemInfos) {
             var textFiltered = Array.FindAll(itemInfos, (itemInfo) => {
-                var normalizedItemName = Util.ConvertToSearchText(itemInfo.Name);
-                var normalizedFilter = Util.ConvertToSearchText(this._searchText);
+                var normalizedItemName = Utility.ConvertToSearchText(itemInfo.Name);
+                var normalizedFilter = Utility.ConvertToSearchText(this._searchText);
                 return Regex.IsMatch(normalizedItemName, normalizedFilter);
             });
 

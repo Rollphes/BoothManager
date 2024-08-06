@@ -1,13 +1,13 @@
 using System;
 
-using io.github.rollphes.boothManager.client;
+using io.github.rollphes.epmanager.client;
 
 using UnityEditor;
 
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace io.github.rollphes.boothManager.tabs {
+namespace io.github.rollphes.epmanager.tabs {
     internal class AuthTab : TabBase {
         private static readonly VisualTreeAsset _loginFormUxml = Resources.Load<VisualTreeAsset>("UI/Components/LoginForm");
         private static readonly VisualTreeAsset _loginFormExecutionStatusUxml = Resources.Load<VisualTreeAsset>("UI/Components/LoginFormExecutionStatus");
@@ -20,7 +20,7 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private VisualElement _loginForm;
 
-        public AuthTab(Client client, BoothManager window, TabController tabController) : base(client, window, tabController) { }
+        public AuthTab(Client client, MainWindow window, TabController tabController) : base(client, window, tabController) { }
 
         internal override void Show() {
             base.Show();

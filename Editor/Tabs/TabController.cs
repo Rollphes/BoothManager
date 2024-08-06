@@ -1,11 +1,11 @@
 using System;
 
-using io.github.rollphes.boothManager.client;
+using io.github.rollphes.epmanager.client;
 
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace io.github.rollphes.boothManager.tabs {
+namespace io.github.rollphes.epmanager.tabs {
 
     internal class TabController {
         private static readonly VisualTreeAsset _tabIconActiveUxml = Resources.Load<VisualTreeAsset>("UI/Components/TabIconActive");
@@ -18,7 +18,7 @@ namespace io.github.rollphes.boothManager.tabs {
 
         private int _activeTabIndex = 0;
 
-        internal TabController(Client client, BoothManager window) {
+        internal TabController(Client client, MainWindow window) {
             this._tabBar = window.rootVisualElement.Q<VisualElement>("TabBar");
             this._tabs = new TabBase[] {
                 new AuthTab(client, window, this),

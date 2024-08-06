@@ -11,15 +11,15 @@ using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-using io.github.rollphes.boothManager.config;
-using io.github.rollphes.boothManager.types.api;
+using io.github.rollphes.epmanager.config;
+using io.github.rollphes.epmanager.types.api;
 
 using PuppeteerSharp;
 using PuppeteerSharp.BrowserData;
 
 using UnityEditor;
 
-namespace io.github.rollphes.boothManager.client {
+namespace io.github.rollphes.epmanager.client {
     internal enum DeployStatusType {
         BrowserDownloading,
         AutoLoginInProgress,

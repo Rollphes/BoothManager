@@ -5,7 +5,7 @@
             <ui:VisualElement name="ShopIcon" style="flex-grow: 0; width: 24px; height: 24px; background-image: resource(&apos;UI/Icons/ImageSync&apos;); border-top-left-radius: 0; border-top-right-radius: 0; border-bottom-right-radius: 0; border-bottom-left-radius: 0; -unity-background-scale-mode: stretch-to-fill;" />
             <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ShopName" style="font-size: 16px;" />
         </ui:VisualElement>
-        <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ItemName" style="-unity-font-style: bold; font-size: 20px;" />
+        <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ItemName" style="-unity-font-style: bold; font-size: 20px; white-space: nowrap; text-overflow: ellipsis; max-height: none;" />
         <ui:VisualElement style="flex-grow: 0; flex-direction: row; height: 24px; flex-shrink: 1; width: 72px; align-items: center; justify-content: space-around; background-color: rgb(46, 46, 46); border-top-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; margin-top: 10px;">
             <ui:VisualElement style="flex-grow: 0; background-image: resource(&apos;UI/Icons/HeartMultiple&apos;); width: 20px; height: 20px; margin-top: 2px; margin-right: 2px; margin-bottom: 2px; margin-left: 2px;" />
             <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" name="WishListsCount" />

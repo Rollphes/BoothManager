@@ -1,5 +1,5 @@
-using io.github.rollphes.boothManager.client;
-using io.github.rollphes.boothManager.tabs;
+using io.github.rollphes.epmanager.client;
+using io.github.rollphes.epmanager.tabs;
 
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -7,8 +7,8 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace io.github.rollphes.boothManager {
-    public class BoothManager : EditorWindow {
+namespace io.github.rollphes.epmanager {
+    public class MainWindow : EditorWindow {
         private static Client _client;
         private static readonly string _githubLink = "https://github.com/Rollphes/BoothManager";
         private static readonly string _changeLogLink = $"{_githubLink}/releases";
@@ -17,7 +17,7 @@ namespace io.github.rollphes.boothManager {
 
         [MenuItem("BoothManager/MainWindow")]
         public static void ShowWindow() {
-            var wnd = GetWindow<BoothManager>("BoothManager");
+            var wnd = GetWindow<MainWindow>("BoothManager");
             wnd.Show();
         }
 

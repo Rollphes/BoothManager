@@ -1,8 +1,8 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace io.github.rollphes.boothManager.util {
-    internal class Util {
+namespace io.github.rollphes.epmanager.utility {
+    internal class Utility {
         internal static string ConvertToSearchText(string input) {
             // Convert to NFKD & Lower
             var s = input.Normalize(NormalizationForm.FormKD).ToLower();

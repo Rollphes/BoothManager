@@ -10,7 +10,7 @@ using PuppeteerSharp;
 
 using UnityEngine;
 
-namespace io.github.rollphes.boothManager.config {
+namespace io.github.rollphes.epmanager.config {
 
     internal class ConfigLoader {
         internal static readonly string RoamingDirectoryPath = "\\\\?\\" + Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "BoothManager");

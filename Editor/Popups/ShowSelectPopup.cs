@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 
-using io.github.rollphes.boothManager.client;
+using io.github.rollphes.epmanager.client;
 
 using UnityEngine;
 using UnityEngine.UIElements;
 
 using VRC.PackageManagement.Core;
 
-namespace io.github.rollphes.boothManager.popups {
+namespace io.github.rollphes.epmanager.popups {
     internal enum ArgLimitType {
         All,
         AllAgesOnly,
