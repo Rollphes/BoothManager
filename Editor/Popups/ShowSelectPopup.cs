@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 
-using io.github.rollphes.epmanager.client;
-
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -26,8 +24,6 @@ namespace io.github.rollphes.epmanager.popups {
         internal ArgLimitType ArgLimitType;
 
         protected override VisualTreeAsset InitTagUxml => Resources.Load<VisualTreeAsset>("UI/Popups/ShowSelectPopupContent");
-
-        public ShowSelectPopup(Client client) : base(client) { }
 
         public override void OnOpen() {
             base.OnOpen();

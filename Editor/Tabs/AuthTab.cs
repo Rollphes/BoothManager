@@ -1,6 +1,6 @@
 using System;
 
-using io.github.rollphes.epmanager.client;
+using io.github.rollphes.epmanager.booth;
 
 using UnityEditor;
 
@@ -20,22 +20,22 @@ namespace io.github.rollphes.epmanager.tabs {
 
         private VisualElement _loginForm;
 
-        public AuthTab(Client client, MainWindow window, TabController tabController) : base(client, window, tabController) { }
+        internal AuthTab(MainWindow window) : base(window) { }
 
         internal override void Show() {
             base.Show();
 
             this._loginForm = this._tabContent.Q<VisualElement>("LoginForm");
 
-            if (this._client.IsDeployed == false) {
+            if (BoothClient.IsDeployed == false) {
                 _loginFormExecutionStatusUxml.CloneTree(this._loginForm);
 
                 var progressBar = this._loginForm.Q<ProgressBar>("Progress");
                 var statusLabel = this._loginForm.Q<Label>("ExecutionStatus");
                 statusLabel.text = "Trying to auto sign in...";
-                this._tabController._IsLock = true;
+                TabController.IsLock = true;
 
-                this._client.OnDeployProgressing += async (deployStatusType) => {
+                BoothClient.OnDeployProgressing += async (deployStatusType) => {
                     switch (deployStatusType) {
                         case DeployStatusType.BrowserDownloading:
                             statusLabel.text = "Browser Downloading...";
@@ -44,9 +44,9 @@ namespace io.github.rollphes.epmanager.tabs {
                             statusLabel.text = "Trying to auto sign in...";
                             break;
                         case DeployStatusType.Complete:
-                            if (this._client.IsLoggedIn) {
+                            if (BoothClient.IsLoggedIn) {
                                 statusLabel.text = "Last page count fetching...";
-                                await this._client.FetchItemInfos(false, (status, index, length) => {
+                                await BoothClient.FetchItemInfos(false, (status, index, length) => {
                                     this.FetchItemInfoOnProgressHandle(statusLabel, progressBar, status, index, length);
                                 });
 
@@ -55,12 +55,12 @@ namespace io.github.rollphes.epmanager.tabs {
                                 this.ShowLoginForm();
                             }
 
-                            this._tabController._IsLock = false;
+                            TabController.IsLock = false;
                             break;
                     }
                 };
             } else {
-                if (this._client.IsLoggedIn) {
+                if (BoothClient.IsLoggedIn) {
                     this.ShowLoginSuccess();
                 } else {
                     this.ShowLoginForm();
@@ -78,7 +78,7 @@ namespace io.github.rollphes.epmanager.tabs {
             var passwordField = this._loginForm.Q<TextField>("PasswordField");
 
             signInButton.clicked += async () => await this.SignInHandle(emailField.value, passwordField.value);
-            signUpButton.clicked += () => this._client.SignUp();
+            signUpButton.clicked += () => BoothClient.SignUp();
         }
 
         private void ShowLoginSuccess() {
@@ -86,11 +86,11 @@ namespace io.github.rollphes.epmanager.tabs {
             _loginSuccessUxml.CloneTree(this._loginForm);
 
             var nickNameLabel = this._loginForm.Q<Label>("NickNameLabel");
-            nickNameLabel.text = this._client.NickName;
+            nickNameLabel.text = BoothClient.NickName;
 
             var logoutButton = this._loginForm.Q<Button>("LogoutButton");
             logoutButton.clicked += () => {
-                this._client.SignOut();
+                BoothClient.SignOut();
                 this.Show();
             };
         }
@@ -109,10 +109,10 @@ namespace io.github.rollphes.epmanager.tabs {
             statusLabel.text = "Trying to sign in...";
 
             try {
-                await this._client.SignIn(email, password);
+                await BoothClient.SignIn(email, password);
 
                 statusLabel.text = "Last page count fetching...";
-                await this._client.FetchItemInfos(false, (status, index, length) => {
+                await BoothClient.FetchItemInfos(false, (status, index, length) => {
                     this.FetchItemInfoOnProgressHandle(statusLabel, progressBar, status, index, length);
                 });
 

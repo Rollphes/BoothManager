@@ -4,8 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-using io.github.rollphes.epmanager.client;
-using io.github.rollphes.epmanager.models;
+using io.github.rollphes.epmanager.booth;
 using io.github.rollphes.epmanager.utility;
 
 using UnityEditor.UIElements;
@@ -24,8 +23,6 @@ namespace io.github.rollphes.epmanager.popups {
 
         private ScrollView _tagListView;
         private string _searchText = "";
-
-        public TagSelectPopup(Client client) : base(client) { }
 
         public override Vector2 GetWindowSize() {
             return new Vector2(200, 500);
@@ -50,7 +47,7 @@ namespace io.github.rollphes.epmanager.popups {
         private async Task ShowTags() {
             this._tagListView.Clear();
 
-            var itemInfos = await this._client.FetchItemInfos();
+            var itemInfos = await BoothClient.FetchItemInfos();
             if (itemInfos == null || itemInfos.Length == 0) {
                 return;
             }

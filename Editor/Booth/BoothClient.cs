@@ -11,15 +11,12 @@ using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-using io.github.rollphes.epmanager.config;
-using io.github.rollphes.epmanager.models;
-
 using PuppeteerSharp;
 using PuppeteerSharp.BrowserData;
 
 using UnityEditor;
 
-namespace io.github.rollphes.epmanager.client {
+namespace io.github.rollphes.epmanager.booth {
     internal enum DeployStatusType {
         BrowserDownloading,
         AutoLoginInProgress,
@@ -32,51 +29,49 @@ namespace io.github.rollphes.epmanager.client {
         ItemInfoFetching
     }
 
-    internal class Client {
-        private static readonly string _browserPath = Path.Combine(ConfigLoader.RoamingDirectoryPath, "Browser");
-        private static readonly string _packagesDirectoryPath = Path.Combine(ConfigLoader.RoamingDirectoryPath, "Packages");
-        private static readonly string _userAgent = "\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36\"";
-        private static readonly string _fileLinkPattern = @"(?<=<a class=""nav-reverse"" href="")https://booth.pm/downloadables/.*?(?="">)";
-        private static readonly string _sevenZipExePath = "Packages/io.github.rollphes.epmanager/Runtime/7-Zip/7z.exe";
+    internal static class BoothClient {
+        internal static string NickName { get; private set; }
+        internal static bool IsDeployed { get; private set; } = false;
+        internal static bool IsLoggedIn { get; private set; } = false;
 
-        internal Action<DeployStatusType> OnDeployProgressing;
-        internal bool IsDeployed { get; private set; } = false;
-        internal bool IsLoggedIn { get; private set; } = false;
-        internal string NickName { get; private set; }
+        private static readonly string _browserPath = Path.Combine(BoothConfig.RoamingDirectoryPath, "Browser");
+        private static readonly string _packagesDirectoryPath = Path.Combine(BoothConfig.RoamingDirectoryPath, "Packages");
+        private const string _userAgent = "\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36\"";
+        private const string _fileLinkPattern = @"(?<=<a class=""nav-reverse"" href="")https://booth.pm/downloadables/.*?(?="">)";
+        private const string _sevenZipExePath = "Packages/io.github.rollphes.epmanager/Runtime/7-Zip/7z.exe";
 
-        private readonly ConfigLoader _config;
-        private ItemInfo[] _itemInfos;
-        private InstalledBrowser _installedBrowser;
+        internal static Action<DeployStatusType> OnDeployProgressing;
 
-        internal Client() {
-            this._config = new ConfigLoader();
-        }
+        private static ItemInfo[] _itemInfos;
+        private static InstalledBrowser _installedBrowser;
 
-        internal async Task Deploy() {
-            this._config.Deploy();
+        internal static async Task Deploy() {
+            if (IsDeployed) {
+                return;
+            }
 
-            this.OnDeployProgressing?.Invoke(DeployStatusType.BrowserDownloading);
+            OnDeployProgressing?.Invoke(DeployStatusType.BrowserDownloading);
             var browserFetcher = new BrowserFetcher(new BrowserFetcherOptions { Path = _browserPath, Browser = SupportedBrowser.Chromium });
-            this._installedBrowser = await browserFetcher.DownloadAsync();
+            _installedBrowser = await browserFetcher.DownloadAsync();
 
-            this.OnDeployProgressing?.Invoke(DeployStatusType.AutoLoginInProgress);
-            await this.CheckAutoLogin();
+            OnDeployProgressing?.Invoke(DeployStatusType.AutoLoginInProgress);
+            await CheckAutoLogin();
 
-            this.OnDeployProgressing?.Invoke(DeployStatusType.Complete);
-            this.IsDeployed = true;
+            OnDeployProgressing?.Invoke(DeployStatusType.Complete);
+            IsDeployed = true;
         }
 
-        internal async Task SignIn(string email, string password) {
+        internal static async Task SignIn(string email, string password) {
             if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password)) {
                 throw new ArgumentException("Email and password are required.");
             }
 
-            var browser = await this.FetchBrowserAsync();
+            var browser = await FetchBrowserAsync();
             var page = (await browser.PagesAsync())[0];
-            await page.GoToAsync(this._config.GetEndpointUrl("auth", "signIn"));
+            await page.GoToAsync(BoothConfig.GetEndpointUrl("auth", "signIn"));
 
-            var emailInputSelector = this._config.GetSelector("auth", "emailInput");
-            var passwordInputSelector = this._config.GetSelector("auth", "passwordInput");
+            var emailInputSelector = BoothConfig.GetSelector("auth", "emailInput");
+            var passwordInputSelector = BoothConfig.GetSelector("auth", "passwordInput");
 
             await page.WaitForSelectorAsync(emailInputSelector);
             await page.TypeAsync(emailInputSelector, email);
@@ -90,56 +85,56 @@ namespace io.github.rollphes.epmanager.client {
                 throw new Exception("Login Failed");
             }
 
-            this.IsLoggedIn = true;
-            this.NickName = await this.GetConfigElementPropertyAsync(page, "auth", "nickName", "innerText");
+            IsLoggedIn = true;
+            NickName = await GetConfigElementPropertyAsync(page, "auth", "nickName", "innerText");
 
             var client = await page.Target.CreateCDPSessionAsync(); // GetCookiesAsync does not work properly in Chromium
             var response = await client.SendAsync("Network.getAllCookies");
-            this._config.SaveCookieParams(response);
+            BoothConfig.SaveCookieParams(response);
 
             await page.DisposeAsync();
             await browser.DisposeAsync();
         }
 
-        internal void SignUp() {
-            Process.Start(this._config.GetEndpointUrl("auth", "signUp"));
+        internal static void SignUp() {
+            Process.Start(BoothConfig.GetEndpointUrl("auth", "signUp"));
         }
 
-        internal void SignOut() {
-            this._config.DeleteCookieParams();
-            this.IsLoggedIn = false;
-            this.NickName = null;
-            this._itemInfos = null;
+        internal static void SignOut() {
+            BoothConfig.DeleteCookieParams();
+            IsLoggedIn = false;
+            NickName = null;
+            _itemInfos = null;
         }
 
-        private async Task CheckAutoLogin() {
-            var cookieParams = this._config.GetCookieParams();
+        private static async Task CheckAutoLogin() {
+            var cookieParams = BoothConfig.GetCookieParams();
             if (cookieParams != null) {
-                var browser = await this.FetchBrowserAsync();
+                var browser = await FetchBrowserAsync();
                 var page = (await browser.PagesAsync())[0];
                 await page.SetCookieAsync(cookieParams);
-                await page.GoToAsync(this._config.GetEndpointUrl("home", "home"));
+                await page.GoToAsync(BoothConfig.GetEndpointUrl("home", "home"));
 
-                var selector = this._config.GetSelector("home", "checkLoggedIn");
+                var selector = BoothConfig.GetSelector("home", "checkLoggedIn");
                 var element = await page.QuerySelectorAsync(selector);
 
-                this.IsLoggedIn = element == null;
-                if (this.IsLoggedIn) {
-                    this.NickName = await this.GetConfigElementPropertyAsync(page, "auth", "nickName", "innerText");
+                IsLoggedIn = element == null;
+                if (IsLoggedIn) {
+                    NickName = await GetConfigElementPropertyAsync(page, "auth", "nickName", "innerText");
                 }
                 await page.DisposeAsync();
                 await browser.DisposeAsync();
             }
         }
 
-        private async Task<List<string>> FetchItemIds(Action<FetchItemInfoStatusType, int, int> onProgressing) {
-            if (!this.IsLoggedIn) {
+        private static async Task<List<string>> FetchItemIds(Action<FetchItemInfoStatusType, int, int> onProgressing) {
+            if (!IsLoggedIn) {
                 throw new InvalidOperationException("You are not logged in.");
             }
 
-            var browser = await this.FetchBrowserAsync();
+            var browser = await FetchBrowserAsync();
             var page = (await browser.PagesAsync())[0];
-            await page.SetCookieAsync(this._config.GetCookieParams());
+            await page.SetCookieAsync(BoothConfig.GetCookieParams());
 
             var itemIds = new List<string>();
             var pageTypes = new string[] { "library", "gift" };
@@ -148,8 +143,8 @@ namespace io.github.rollphes.epmanager.client {
             foreach (var pageType in pageTypes) {
                 var urlParams = new Dictionary<string, string> { { "pageNumber", "1" } };
                 try {
-                    await page.GoToAsync(this._config.GetEndpointUrl("library", pageType, urlParams));
-                    var lastPageUrlLink = await this.GetConfigElementPropertyAsync(page, "library", "lastPageLink", "href");
+                    await page.GoToAsync(BoothConfig.GetEndpointUrl("library", pageType, urlParams));
+                    var lastPageUrlLink = await GetConfigElementPropertyAsync(page, "library", "lastPageLink", "href");
                     lastPageCounts[pageType] = int.Parse(Regex.Match(lastPageUrlLink, @"(?<=\?page=).*?(?=$|&)").ToString());
                 } catch {
                     lastPageCounts[pageType] = 0;
@@ -161,15 +156,15 @@ namespace io.github.rollphes.epmanager.client {
                     onProgressing?.Invoke(pageType == "library" ? FetchItemInfoStatusType.ItemIdFetchingInLibrary : FetchItemInfoStatusType.ItemIdFetchingInGift, i, lastPageCounts[pageType]);
 
                     var urlParams = new Dictionary<string, string> { { "pageNumber", i.ToString() } };
-                    await page.GoToAsync(this._config.GetEndpointUrl("library", pageType, urlParams));
+                    await page.GoToAsync(BoothConfig.GetEndpointUrl("library", pageType, urlParams));
 
-                    var orders = await page.QuerySelectorAllAsync(this._config.GetSelector("library", "orders"));
+                    var orders = await page.QuerySelectorAllAsync(BoothConfig.GetSelector("library", "orders"));
                     if (orders.Length == 0) {
                         break;
                     }
 
                     var orderTasks = orders.Select(async (order) => {
-                        var itemUrlLink = await this.GetConfigElementPropertyAsync(order, "library", "itemLink", "href");
+                        var itemUrlLink = await GetConfigElementPropertyAsync(order, "library", "itemLink", "href");
                         var itemId = itemUrlLink.Split("/").Last();
                         if (!itemIds.Contains(itemId)) {
                             itemIds.Add(itemId);
@@ -189,37 +184,33 @@ namespace io.github.rollphes.epmanager.client {
             return itemIds;
         }
 
-        internal async Task<ItemInfo[]> FetchItemInfos(bool force = false, Action<FetchItemInfoStatusType, int, int> onProgressing = null) {
-            if (this._itemInfos == null || force) {
-                var itemIds = await this.FetchItemIds(onProgressing);
-                if (!this.IsLoggedIn) {
+        internal static async Task<ItemInfo[]> FetchItemInfos(bool force = false, Action<FetchItemInfoStatusType, int, int> onProgressing = null) {
+            if (_itemInfos == null || force) {
+                var itemIds = await FetchItemIds(onProgressing);
+                if (!IsLoggedIn) {
                     throw new InvalidOperationException("You are not logged in.");
                 }
 
-                var httpClient = this.GetHttpClient();
+                var httpClient = GetHttpClient();
                 httpClient.DefaultRequestHeaders.Accept.Clear();
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
                 var taskCompletedCount = 0;
 
                 var tasks = itemIds.Select(async (itemId) => {
-                    var itemInfo = await this.FetchItemInfoAsync(httpClient, itemId);
+                    var itemInfo = await FetchItemInfoAsync(httpClient, itemId);
                     taskCompletedCount++;
                     onProgressing?.Invoke(FetchItemInfoStatusType.ItemInfoFetching, taskCompletedCount, itemIds.Count);
                     return itemInfo;
                 });
-                var itemInfos = await Task.WhenAll(tasks);
-
-                this._itemInfos = itemInfos;
-                return itemInfos;
-            } else {
-                return this._itemInfos;
+                _itemInfos = await Task.WhenAll(tasks);
             }
+            return _itemInfos;
         }
 
-        private async Task<ItemInfo> FetchItemInfoAsync(HttpClient httpClient, string itemId) {
+        private static async Task<ItemInfo> FetchItemInfoAsync(HttpClient httpClient, string itemId) {
             var urlParams = new Dictionary<string, string> { { "lang", "ja" }, { "itemId", itemId } };
-            var url = this._config.GetEndpointUrl("api", "itemInfo", urlParams);
+            var url = BoothConfig.GetEndpointUrl("api", "itemInfo", urlParams);
             var uri = new Uri(url);
             httpClient.BaseAddress = new Uri(uri.GetLeftPart(UriPartial.Authority));
 
@@ -287,7 +278,7 @@ namespace io.github.rollphes.epmanager.client {
         //}
 
         /* This Test Method */
-        private async Task DownloadFileFromRedirectUrlAsync(HttpClient httpClient, string url, string destinationDirectoryPath) {
+        private static async Task DownloadFileFromRedirectUrlAsync(HttpClient httpClient, string url, string destinationDirectoryPath) {
             var response = await httpClient.GetAsync(url);
             Uri location = null;
 
@@ -309,10 +300,10 @@ namespace io.github.rollphes.epmanager.client {
             var content = await response.Content.ReadAsByteArrayAsync();
             await File.WriteAllBytesAsync(zipFilePath, content);
 
-            this.ExtractZipFile(zipFilePath, destinationDirectoryPath);
+            ExtractZipFile(zipFilePath, destinationDirectoryPath);
         }
 
-        private void ExtractZipFile(string zipFilePath, string extractPath) {
+        private static void ExtractZipFile(string zipFilePath, string extractPath) {
             try {
                 if (!zipFilePath.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) {
                     throw new ArgumentException("The specified file is not a zip file.");
@@ -346,27 +337,27 @@ namespace io.github.rollphes.epmanager.client {
         }
 
         // utility methods
-        private async Task<string> GetConfigElementPropertyAsync(IPage page, string section, string key, string property) {
-            var selector = this._config.GetSelector(section, key);
+        private static async Task<string> GetConfigElementPropertyAsync(IPage page, string section, string key, string property) {
+            var selector = BoothConfig.GetSelector(section, key);
             var element = await page.QuerySelectorAsync(selector) ?? throw new InvalidOperationException($"Element is not initialized.({selector})");
             var value = (await element.GetPropertyAsync(property)).RemoteObject.Value.ToString();
             return value;
         }
 
-        private async Task<string> GetConfigElementPropertyAsync(IElementHandle personElement, string section, string key, string property) {
-            var selector = this._config.GetSelector(section, key);
+        private static async Task<string> GetConfigElementPropertyAsync(IElementHandle personElement, string section, string key, string property) {
+            var selector = BoothConfig.GetSelector(section, key);
             var element = await personElement.QuerySelectorAsync(selector) ?? throw new InvalidOperationException($"Element is not initialized.({selector})");
             var value = (await element.GetPropertyAsync(property)).RemoteObject.Value.ToString();
             return value;
         }
 
-        private HttpClient GetHttpClient() {
+        private static HttpClient GetHttpClient() {
             var handler = new HttpClientHandler {
                 CookieContainer = new CookieContainer(),
                 AllowAutoRedirect = false,
             };
 
-            var cookies = this._config.GetCookieParams();
+            var cookies = BoothConfig.GetCookieParams();
             foreach (var cookie in cookies) {
                 handler.CookieContainer.Add(new Cookie(cookie.Name, cookie.Value, cookie.Path, cookie.Domain));
             }
@@ -374,12 +365,12 @@ namespace io.github.rollphes.epmanager.client {
             return new HttpClient(handler);
         }
 
-        private async Task<IBrowser> FetchBrowserAsync() {
-            if (this._installedBrowser == null) {
+        private static async Task<IBrowser> FetchBrowserAsync() {
+            if (_installedBrowser == null) {
                 throw new InvalidOperationException("Browser is not installed");
             };
             return await Puppeteer.LaunchAsync(new LaunchOptions {
-                ExecutablePath = this._installedBrowser.GetExecutablePath(),
+                ExecutablePath = _installedBrowser.GetExecutablePath(),
                 HeadlessMode = HeadlessMode.True,
                 Args = new[] {
                     "--window-size=1,1",

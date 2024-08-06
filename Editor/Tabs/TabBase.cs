@@ -1,5 +1,3 @@
-using io.github.rollphes.epmanager.client;
-
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -12,15 +10,10 @@ namespace io.github.rollphes.epmanager.tabs {
 
         protected abstract VisualTreeAsset InitTabUxml { get; }
 
-        protected Client _client;
         protected MainWindow _window;
         protected VisualElement _tabContent;
-        protected TabController _tabController;
 
-        internal TabBase(Client client, MainWindow window, TabController tabController) {
-            this._client = client;
-            this._window = window;
-            this._tabController = tabController;
+        internal TabBase(MainWindow window) {
             this._tabContent = window.rootVisualElement.Q<VisualElement>("TabContent");
         }
 

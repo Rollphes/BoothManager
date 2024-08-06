@@ -10,25 +10,25 @@ using PuppeteerSharp;
 
 using UnityEngine;
 
-namespace io.github.rollphes.epmanager.config {
+namespace io.github.rollphes.epmanager.booth {
 
-    internal class ConfigLoader {
+    internal static class BoothConfig {
         internal static readonly string RoamingDirectoryPath = "\\\\?\\" + Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "EPManager");
 
         private static readonly string _cookieDirectoryPath = Path.Combine(RoamingDirectoryPath, "Cookies");
         private static readonly string _cookieJsonPath = Path.Combine(_cookieDirectoryPath, "cookies.json");
         private static readonly JObject _configJson = JObject.Parse(Resources.Load<TextAsset>("Conf/booth.config").text);
 
-        private List<JObject> _cookiesJson;
+        private static List<JObject> _cookiesJson;
 
-        internal void Deploy() {
+        static BoothConfig() {
             if (!Directory.Exists(_cookieDirectoryPath)) {
                 Directory.CreateDirectory(_cookieDirectoryPath);
             }
-            this.SetCookiesJson();
+            SetCookiesJson();
         }
 
-        internal string GetEndpointUrl(string section, string key, Dictionary<string, string> args = null) {
+        internal static string GetEndpointUrl(string section, string key, Dictionary<string, string> args = null) {
             var sectionObj = _configJson[section] ?? throw new Exception($"Section '{section}' not found in config file");
             var endpoints = sectionObj["endpoints"] ?? throw new Exception($"Endpoints not found in section '{section}'");
             var endpointInfo = endpoints[key] ?? throw new Exception($"Endpoint '{key}' not found in section '{section}'");
@@ -63,15 +63,15 @@ namespace io.github.rollphes.epmanager.config {
             return url;
         }
 
-        internal string GetSelector(string section, string key) {
+        internal static string GetSelector(string section, string key) {
             var sectionObj = _configJson[section] ?? throw new Exception($"Section '{section}' not found in config file");
             var selectors = sectionObj["selectors"] ?? throw new Exception($"Selectors not found in section '{section}'");
             var selector = selectors[key] ?? throw new Exception($"Selector '{key}' not found in section '{section}'");
             return selector.ToString();
         }
 
-        internal CookieParam[] GetCookieParams() {
-            return this._cookiesJson?.Select((cookieJson) =>
+        internal static CookieParam[] GetCookieParams() {
+            return _cookiesJson?.Select((cookieJson) =>
                 new CookieParam {
                     Name = cookieJson["name"].ToString(),
                     Value = cookieJson["value"].ToString(),
@@ -82,26 +82,26 @@ namespace io.github.rollphes.epmanager.config {
                 }).ToArray();
         }
 
-        internal void SaveCookieParams(JObject response) {
+        internal static void SaveCookieParams(JObject response) {
             var jsonObject = JObject.Parse(response.ToString());
             var cookies = jsonObject["cookies"].ToObject<JArray>();
             var json = cookies.ToString();
             File.WriteAllText(_cookieJsonPath, json);
 
-            this.SetCookiesJson();
+            SetCookiesJson();
         }
 
-        internal void DeleteCookieParams() {
+        internal static void DeleteCookieParams() {
             if (File.Exists(_cookieJsonPath)) {
                 File.Delete(_cookieJsonPath);
             }
-            this._cookiesJson = null;
+            _cookiesJson = null;
         }
 
-        private void SetCookiesJson() {
+        private static void SetCookiesJson() {
             if (File.Exists(_cookieJsonPath)) {
                 var json = File.ReadAllText(_cookieJsonPath);
-                this._cookiesJson = JsonConvert.DeserializeObject<List<JObject>>(json);
+                _cookiesJson = JsonConvert.DeserializeObject<List<JObject>>(json);
             }
         }
     }

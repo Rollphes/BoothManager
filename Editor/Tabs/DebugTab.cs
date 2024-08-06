@@ -1,4 +1,4 @@
-using io.github.rollphes.epmanager.client;
+using io.github.rollphes.epmanager.booth;
 
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -10,7 +10,7 @@ namespace io.github.rollphes.epmanager.tabs {
 
         protected override VisualTreeAsset InitTabUxml => Resources.Load<VisualTreeAsset>("UI/Tabs/DebugTabContent");
 
-        public DebugTab(Client client, MainWindow window, TabController tabController) : base(client, window, tabController) { }
+        internal DebugTab(MainWindow window) : base(window) { }
 
         internal override void Show() {
             base.Show();
@@ -18,7 +18,7 @@ namespace io.github.rollphes.epmanager.tabs {
             var elementButton = this._tabContent.Q<VisualElement>("ElementButton");
             elementButton.RegisterCallback<ClickEvent>(async (evt) => {
                 Debug.Log("Element clicked!");
-                await this._client.FetchItemInfos();
+                await BoothClient.FetchItemInfos();
                 Debug.Log("Library fetched!");
             });
         }

@@ -1,5 +1,3 @@
-using io.github.rollphes.epmanager.client;
-
 using UnityEditor;
 
 using UnityEngine;
@@ -10,11 +8,6 @@ namespace io.github.rollphes.epmanager.popups {
         private static readonly StyleSheet _styleSheet = Resources.Load<StyleSheet>("USS/Util");
 
         protected abstract VisualTreeAsset InitTagUxml { get; }
-        protected readonly Client _client;
-
-        public PopupBase(Client client) {
-            this._client = client;
-        }
 
         public override Vector2 GetWindowSize() {
             return new Vector2(200, 100);

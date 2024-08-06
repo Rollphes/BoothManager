@@ -4,8 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-using io.github.rollphes.epmanager.client;
-using io.github.rollphes.epmanager.models;
+using io.github.rollphes.epmanager.booth;
 using io.github.rollphes.epmanager.popups;
 using io.github.rollphes.epmanager.utility;
 
@@ -43,9 +42,9 @@ namespace io.github.rollphes.epmanager.tabs {
         private VisualElement _itemSelectorContent;
         private VisualElement _itemDetailContent;
 
-        public LibraryTab(Client client, MainWindow window, TabController tabController) : base(client, window, tabController) {
-            this._tagSelectPopup = new TagSelectPopup(client);
-            this._showSelectPopup = new ShowSelectPopup(client);
+        internal LibraryTab(MainWindow window) : base(window) {
+            this._tagSelectPopup = new();
+            this._showSelectPopup = new();
             this._classNameToPopupDictionary = new() {
                 { "TagSelectPopupButton", this._tagSelectPopup },
                 { "ShowSelectPopupButton", this._showSelectPopup }
@@ -138,12 +137,12 @@ namespace io.github.rollphes.epmanager.tabs {
         }
 
         private async Task ShowItemInfos() {
-            if (!this._client.IsLoggedIn) {
+            if (!BoothClient.IsLoggedIn) {
                 var nonItemText = this._itemSelectorContent.Q<Label>("NonItemText");
                 nonItemText.text = "ログイン後に使用可能です";
                 return;
             }
-            var itemInfos = await this._client.FetchItemInfos();
+            var itemInfos = await BoothClient.FetchItemInfos();
             if (itemInfos == null || itemInfos.Length == 0) {
                 var nonItemText = this._itemSelectorContent.Q<Label>("NonItemText");
                 nonItemText.text = "アイテムがありません";
