@@ -4,7 +4,7 @@ using System.Globalization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace io.github.rollphes.epmanager.types.api {
+namespace io.github.rollphes.epmanager.models {
     public partial class ItemInfo {
         [JsonProperty("description")]
         public string Description { get; set; }

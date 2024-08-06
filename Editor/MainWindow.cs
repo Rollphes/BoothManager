@@ -10,14 +10,14 @@ using UnityEngine.UIElements;
 namespace io.github.rollphes.epmanager {
     public class MainWindow : EditorWindow {
         private static Client _client;
-        private static readonly string _githubLink = "https://github.com/Rollphes/BoothManager";
+        private static readonly string _githubLink = "https://github.com/Rollphes/EPManager";
         private static readonly string _changeLogLink = $"{_githubLink}/releases";
 
         private TabController _tabController;
 
-        [MenuItem("BoothManager/MainWindow")]
+        [MenuItem("EPManager/MainWindow")]
         public static void ShowWindow() {
-            var wnd = GetWindow<MainWindow>("BoothManager");
+            var wnd = GetWindow<MainWindow>("EPManager");
             wnd.Show();
         }
 
@@ -31,7 +31,7 @@ namespace io.github.rollphes.epmanager {
 
         public void CreateGUI() {
             var root = this.rootVisualElement;
-            var mainUXML = Resources.Load<VisualTreeAsset>("UI/BoothManager");
+            var mainUXML = Resources.Load<VisualTreeAsset>("UI/MainWindow");
             mainUXML.CloneTree(root);
 
             var changeLogLink = root.Q<ToolbarButton>("ChangeLogLink");

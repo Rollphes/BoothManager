@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <uie:Toolbar style="flex-direction: row; justify-content: flex-start;">
         <uie:ToolbarSpacer />
-        <ui:Label tabindex="-1" text="BoothManager" parse-escape-sequences="true" display-tooltip-when-elided="true" style="-unity-text-align: middle-left; -unity-font-style: bold;" />
+        <ui:Label tabindex="-1" text="EPManager" parse-escape-sequences="true" display-tooltip-when-elided="true" style="-unity-text-align: middle-left; -unity-font-style: bold;" />
         <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: flex-end;">
             <uie:ToolbarButton text="変更履歴" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ChangeLogLink" style="-unity-text-align: middle-left; white-space: nowrap;" />
             <uie:ToolbarButton text="Github" parse-escape-sequences="true" display-tooltip-when-elided="true" name="GithubLink" style="justify-content: flex-start; -unity-text-align: middle-left;" />

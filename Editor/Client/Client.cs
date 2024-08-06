@@ -12,7 +12,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using io.github.rollphes.epmanager.config;
-using io.github.rollphes.epmanager.types.api;
+using io.github.rollphes.epmanager.models;
 
 using PuppeteerSharp;
 using PuppeteerSharp.BrowserData;
@@ -37,7 +37,7 @@ namespace io.github.rollphes.epmanager.client {
         private static readonly string _packagesDirectoryPath = Path.Combine(ConfigLoader.RoamingDirectoryPath, "Packages");
         private static readonly string _userAgent = "\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36\"";
         private static readonly string _fileLinkPattern = @"(?<=<a class=""nav-reverse"" href="")https://booth.pm/downloadables/.*?(?="">)";
-        private static readonly string _sevenZipExePath = "Packages/io.github.rollphes.booth-manager/Runtime/7-Zip/7z.exe";
+        private static readonly string _sevenZipExePath = "Packages/io.github.rollphes.epmanager/Runtime/7-Zip/7z.exe";
 
         internal Action<DeployStatusType> OnDeployProgressing;
         internal bool IsDeployed { get; private set; } = false;

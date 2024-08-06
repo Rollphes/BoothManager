@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using io.github.rollphes.epmanager.client;
-using io.github.rollphes.epmanager.types.api;
+using io.github.rollphes.epmanager.models;
 using io.github.rollphes.epmanager.utility;
 
 using UnityEditor.UIElements;
