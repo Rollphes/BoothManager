@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Linq;
 
 using io.github.rollphes.epmanager.booth;
@@ -17,8 +18,6 @@ namespace io.github.rollphes.epmanager.library {
         internal Uri Url { get; private set; }
         internal Variation[] Variations { get; private set; }
 
-        private readonly ItemInfo _info;
-
         internal Item(ItemInfo info) {
             this.Id = info.Id;
             this.Name = info.Name;
@@ -31,8 +30,10 @@ namespace io.github.rollphes.epmanager.library {
             this.Images = info.Images;
             this.Url = info.Url;
             this.Variations = info.Variations.Select((variationInfo) => new Variation(variationInfo)).ToArray();
+        }
 
-            this._info = info;
+        internal void OpenWebPage() {
+            Process.Start(this.Url.ToString());
         }
     }
 }

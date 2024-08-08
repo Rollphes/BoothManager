@@ -11,16 +11,12 @@ namespace io.github.rollphes.epmanager.library {
         internal bool IsBought { get; private set; }
         //internal Package[] Packages { get; private set; }
 
-        private readonly VariationInfo _info;
-
         internal Variation(VariationInfo info) {
             this.Id = info.Id;
             this.Name = info.Name;
             this.Price = info.Price;
             this.OrderUrl = info.OrderUrl;
             this.IsBought = info.OrderUrl != null;
-
-            this._info = info;
         }
     }
 }
