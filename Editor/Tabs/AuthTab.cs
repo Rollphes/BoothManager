@@ -1,6 +1,7 @@
 using System;
 
 using io.github.rollphes.epmanager.booth;
+using io.github.rollphes.epmanager.library;
 
 using UnityEditor;
 
@@ -33,22 +34,21 @@ namespace io.github.rollphes.epmanager.tabs {
                 var progressBar = this._loginForm.Q<ProgressBar>("Progress");
                 var statusLabel = this._loginForm.Q<Label>("ExecutionStatus");
                 statusLabel.text = "Trying to auto sign in...";
+                Library.OnUpdateCacheProgress += (status, index, length) => this.OnUpdateCacheProgressHandle(statusLabel, progressBar, status, index, length);
                 TabController.IsLock = true;
 
-                BoothClient.OnDeployProgressing += async (deployStatusType) => {
+                BoothClient.OnDeployProgress += async (deployStatusType) => {
                     switch (deployStatusType) {
-                        case DeployStatusType.BrowserDownloading:
+                        case DeployStatus.BrowserDownloading:
                             statusLabel.text = "Browser Downloading...";
                             break;
-                        case DeployStatusType.AutoLoginInProgress:
+                        case DeployStatus.AutoLoginInProgress:
                             statusLabel.text = "Trying to auto sign in...";
                             break;
-                        case DeployStatusType.Complete:
+                        case DeployStatus.Complete:
                             if (BoothClient.IsLoggedIn) {
                                 statusLabel.text = "Last page count fetching...";
-                                await BoothClient.FetchItemInfos(false, (status, index, length) => {
-                                    this.FetchItemInfoOnProgressHandle(statusLabel, progressBar, status, index, length);
-                                });
+                                await Library.UpdateCache();
 
                                 this.ShowLoginSuccess();
                             } else {
@@ -106,15 +106,14 @@ namespace io.github.rollphes.epmanager.tabs {
 
             var progressBar = this._loginForm.Q<ProgressBar>("Progress");
             var statusLabel = this._loginForm.Q<Label>("ExecutionStatus");
+            Library.OnUpdateCacheProgress += (status, index, length) => this.OnUpdateCacheProgressHandle(statusLabel, progressBar, status, index, length);
             statusLabel.text = "Trying to sign in...";
 
             try {
                 await BoothClient.SignIn(email, password);
 
                 statusLabel.text = "Last page count fetching...";
-                await BoothClient.FetchItemInfos(false, (status, index, length) => {
-                    this.FetchItemInfoOnProgressHandle(statusLabel, progressBar, status, index, length);
-                });
+                await Library.UpdateCache();
 
                 this.ShowLoginSuccess();
             } catch (Exception e) {
@@ -125,22 +124,22 @@ namespace io.github.rollphes.epmanager.tabs {
             }
         }
 
-        private void FetchItemInfoOnProgressHandle(Label label, ProgressBar progress, FetchItemInfoStatusType status, int index, int length) {
+        private void OnUpdateCacheProgressHandle(Label label, ProgressBar progress, LibraryUpdateStatus status, int index, int length) {
             progress.style.display = DisplayStyle.Flex;
             progress.highValue = length;
             progress.lowValue = 0;
             progress.value = index;
 
             switch (status) {
-                case FetchItemInfoStatusType.ItemIdFetchingInLibrary:
+                case LibraryUpdateStatus.ItemIdFetchingInLibrary:
                     label.text = "ItemId Fetching In Library page...";
                     progress.title = $"{index}/{length} page";
                     break;
-                case FetchItemInfoStatusType.ItemIdFetchingInGift:
+                case LibraryUpdateStatus.ItemIdFetchingInGift:
                     label.text = "ItemId Fetching In Gift page...";
                     progress.title = $"{index}/{length} page";
                     break;
-                case FetchItemInfoStatusType.ItemInfoFetching:
+                case LibraryUpdateStatus.ItemInfoFetching:
                     label.text = "Item Info Fetching...";
                     progress.title = $"{index}/{length} item";
                     break;

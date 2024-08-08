@@ -13,9 +13,7 @@ using UnityEngine;
 namespace io.github.rollphes.epmanager.booth {
 
     internal static class BoothConfig {
-        internal static readonly string RoamingDirectoryPath = "\\\\?\\" + Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "EPManager");
-
-        private static readonly string _cookieDirectoryPath = Path.Combine(RoamingDirectoryPath, "Cookies");
+        private static readonly string _cookieDirectoryPath = Path.Combine(Core.RoamingDirectoryPath, "Cookies");
         private static readonly string _cookieJsonPath = Path.Combine(_cookieDirectoryPath, "cookies.json");
         private static readonly JObject _configJson = JObject.Parse(Resources.Load<TextAsset>("Conf/booth.config").text);
 

@@ -88,10 +88,10 @@ namespace io.github.rollphes.epmanager.booth {
         internal object Sound { get; set; }
 
         [JsonProperty("tags")]
-        internal Tag[] Tags { get; set; }
+        internal TagInfo[] TagInfos { get; set; }
 
         [JsonProperty("tag_banners")]
-        internal TagBanner[] TagBanners { get; set; }
+        internal Tag[] Tags { get; set; }
 
         [JsonProperty("tag_combination")]
         internal TagCombination TagCombination { get; set; }
@@ -100,7 +100,7 @@ namespace io.github.rollphes.epmanager.booth {
         internal object Tracks { get; set; }
 
         [JsonProperty("variations")]
-        internal Variation[] Variations { get; set; }
+        internal VariationInfo[] Variations { get; set; }
     }
 
     internal partial class Category {
@@ -111,13 +111,13 @@ namespace io.github.rollphes.epmanager.booth {
         internal string Name { get; set; }
 
         [JsonProperty("parent")]
-        internal Tag Parent { get; set; }
+        internal TagInfo Parent { get; set; }
 
         [JsonProperty("url")]
         internal Uri Url { get; set; }
     }
 
-    internal partial class Tag {
+    internal partial class TagInfo {
         [JsonProperty("name")]
         internal string Name { get; set; }
 
@@ -169,7 +169,7 @@ namespace io.github.rollphes.epmanager.booth {
         internal bool Verified { get; set; }
     }
 
-    internal partial class TagBanner {
+    internal partial class Tag {
         [JsonProperty("image_url")]
         internal Uri ImageUrl { get; set; }
 
@@ -191,7 +191,7 @@ namespace io.github.rollphes.epmanager.booth {
         internal Uri Url { get; set; }
     }
 
-    internal partial class Variation {
+    internal partial class VariationInfo {
         [JsonProperty("buyee_html")]
         internal object BuyeeHtml { get; set; }
 

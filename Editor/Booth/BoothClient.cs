@@ -17,13 +17,13 @@ using PuppeteerSharp.BrowserData;
 using UnityEditor;
 
 namespace io.github.rollphes.epmanager.booth {
-    internal enum DeployStatusType {
+    internal enum DeployStatus {
         BrowserDownloading,
         AutoLoginInProgress,
         Complete
     }
 
-    internal enum FetchItemInfoStatusType {
+    internal enum FetchItemInfoStatus {
         ItemIdFetchingInLibrary,
         ItemIdFetchingInGift,
         ItemInfoFetching
@@ -34,15 +34,14 @@ namespace io.github.rollphes.epmanager.booth {
         internal static bool IsDeployed { get; private set; } = false;
         internal static bool IsLoggedIn { get; private set; } = false;
 
-        private static readonly string _browserPath = Path.Combine(BoothConfig.RoamingDirectoryPath, "Browser");
-        private static readonly string _packagesDirectoryPath = Path.Combine(BoothConfig.RoamingDirectoryPath, "Packages");
+        private static readonly string _browserPath = Path.Combine(Core.RoamingDirectoryPath, "Browser");
+        private static readonly string _packagesDirectoryPath = Path.Combine(Core.RoamingDirectoryPath, "Packages");
         private const string _userAgent = "\"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36\"";
         private const string _fileLinkPattern = @"(?<=<a class=""nav-reverse"" href="")https://booth.pm/downloadables/.*?(?="">)";
         private const string _sevenZipExePath = "Packages/io.github.rollphes.epmanager/Runtime/7-Zip/7z.exe";
 
-        internal static Action<DeployStatusType> OnDeployProgressing;
+        internal static Action<DeployStatus> OnDeployProgress;
 
-        private static ItemInfo[] _itemInfos;
         private static InstalledBrowser _installedBrowser;
 
         internal static async Task Deploy() {
@@ -50,14 +49,14 @@ namespace io.github.rollphes.epmanager.booth {
                 return;
             }
 
-            OnDeployProgressing?.Invoke(DeployStatusType.BrowserDownloading);
+            OnDeployProgress?.Invoke(DeployStatus.BrowserDownloading);
             var browserFetcher = new BrowserFetcher(new BrowserFetcherOptions { Path = _browserPath, Browser = SupportedBrowser.Chromium });
             _installedBrowser = await browserFetcher.DownloadAsync();
 
-            OnDeployProgressing?.Invoke(DeployStatusType.AutoLoginInProgress);
+            OnDeployProgress?.Invoke(DeployStatus.AutoLoginInProgress);
             await CheckAutoLogin();
 
-            OnDeployProgressing?.Invoke(DeployStatusType.Complete);
+            OnDeployProgress?.Invoke(DeployStatus.Complete);
             IsDeployed = true;
         }
 
@@ -104,7 +103,6 @@ namespace io.github.rollphes.epmanager.booth {
             BoothConfig.DeleteCookieParams();
             IsLoggedIn = false;
             NickName = null;
-            _itemInfos = null;
         }
 
         private static async Task CheckAutoLogin() {
@@ -127,11 +125,7 @@ namespace io.github.rollphes.epmanager.booth {
             }
         }
 
-        private static async Task<List<string>> FetchItemIds(Action<FetchItemInfoStatusType, int, int> onProgressing) {
-            if (!IsLoggedIn) {
-                throw new InvalidOperationException("You are not logged in.");
-            }
-
+        private static async Task<List<string>> FetchItemIds(Action<FetchItemInfoStatus, int, int> onProgressing) {
             var browser = await FetchBrowserAsync();
             var page = (await browser.PagesAsync())[0];
             await page.SetCookieAsync(BoothConfig.GetCookieParams());
@@ -153,7 +147,7 @@ namespace io.github.rollphes.epmanager.booth {
 
             foreach (var pageType in pageTypes) {
                 for (var i = 1; i <= lastPageCounts[pageType]; i++) {
-                    onProgressing?.Invoke(pageType == "library" ? FetchItemInfoStatusType.ItemIdFetchingInLibrary : FetchItemInfoStatusType.ItemIdFetchingInGift, i, lastPageCounts[pageType]);
+                    onProgressing?.Invoke(pageType == "library" ? FetchItemInfoStatus.ItemIdFetchingInLibrary : FetchItemInfoStatus.ItemIdFetchingInGift, i, lastPageCounts[pageType]);
 
                     var urlParams = new Dictionary<string, string> { { "pageNumber", i.ToString() } };
                     await page.GoToAsync(BoothConfig.GetEndpointUrl("library", pageType, urlParams));
@@ -184,28 +178,27 @@ namespace io.github.rollphes.epmanager.booth {
             return itemIds;
         }
 
-        internal static async Task<ItemInfo[]> FetchItemInfos(bool force = false, Action<FetchItemInfoStatusType, int, int> onProgressing = null) {
-            if (_itemInfos == null || force) {
-                var itemIds = await FetchItemIds(onProgressing);
-                if (!IsLoggedIn) {
-                    throw new InvalidOperationException("You are not logged in.");
-                }
-
-                var httpClient = GetHttpClient();
-                httpClient.DefaultRequestHeaders.Accept.Clear();
-                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                var taskCompletedCount = 0;
-
-                var tasks = itemIds.Select(async (itemId) => {
-                    var itemInfo = await FetchItemInfoAsync(httpClient, itemId);
-                    taskCompletedCount++;
-                    onProgressing?.Invoke(FetchItemInfoStatusType.ItemInfoFetching, taskCompletedCount, itemIds.Count);
-                    return itemInfo;
-                });
-                _itemInfos = await Task.WhenAll(tasks);
+        internal static async Task<ItemInfo[]> FetchItemInfos(Action<FetchItemInfoStatus, int, int> onProgressing = null) {
+            if (!IsLoggedIn) {
+                throw new InvalidOperationException("You are not logged in.");
             }
-            return _itemInfos;
+
+            var itemIds = await FetchItemIds(onProgressing);
+
+            var httpClient = GetHttpClient();
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var taskCompletedCount = 0;
+
+            var tasks = itemIds.Select(async (itemId) => {
+                var itemInfo = await FetchItemInfoAsync(httpClient, itemId);
+                taskCompletedCount++;
+                onProgressing?.Invoke(FetchItemInfoStatus.ItemInfoFetching, taskCompletedCount, itemIds.Count);
+                return itemInfo;
+            });
+            return await Task.WhenAll(tasks);
+
         }
 
         private static async Task<ItemInfo> FetchItemInfoAsync(HttpClient httpClient, string itemId) {
@@ -222,60 +215,56 @@ namespace io.github.rollphes.epmanager.booth {
         }
 
         /* This Test Method */
-        //internal async Task DownloadAllFile() {
-        //    Debug.Log("Start DownloadAllFile");
-        //    this.ValidateBrowserInitialized();
+        internal static async Task DownloadAllFile() {
 
-        //    throw new Exception("Forbidden method.");
+            if (!IsLoggedIn) {
+                throw new InvalidOperationException("You are not logged in.");
+            }
 
-        //    if (!this.IsLoggedIn) {
-        //        throw new InvalidOperationException("You are not logged in.");
-        //    }
+            var httpClient = GetHttpClient();
 
-        //    HttpClient httpClient = this.GetHttpClient();
+            var itemInfoTasks = (await FetchItemInfos()).Select(async (itemInfo) => {
 
-        //    var itemInfoTasks = this._itemInfoList.Select(async (itemInfoCurrent) => {
+                var itemDirectoryPath = Path.Combine(_packagesDirectoryPath, itemInfo.Id.ToString());
+                if (!Directory.Exists(itemDirectoryPath)) {
+                    Directory.CreateDirectory(itemDirectoryPath);
+                }
+                var variationTasks = itemInfo.Variations.Select(async (variation) => {
+                    if (variation.OrderUrl == null) {
+                        return;
+                    }
 
-        //        string itemId = itemInfoCurrent.Key;
-        //        ItemInfo itemInfo = itemInfoCurrent.Value;
-        //        var itemDirectoryPath = Path.Combine(_packagesDirectoryPath, itemId);
-        //        if (!Directory.Exists(itemDirectoryPath)) {
-        //            Directory.CreateDirectory(itemDirectoryPath);
-        //        }
-        //        var variationTasks = itemInfo.Variations.Select(async (variation) => {
-        //            if (variation.OrderUrl == null)
-        //                return;
-        //            var variationDirectoryPath = Path.Combine(itemDirectoryPath, variation.Id.ToString());
-        //            if (!Directory.Exists(variationDirectoryPath)) {
-        //                Directory.CreateDirectory(variationDirectoryPath);
-        //            }
-        //            string html = await httpClient.GetStringAsync(variation.OrderUrl.ToString()); // Puppeteer has a glitch with too many pages open at once.
-        //            var LinkMatch = Regex.Matches(html, _fileLinkPattern, RegexOptions.IgnoreCase);
-        //            var fileTasks = LinkMatch.Select(async (link) => {
-        //                var fileUrlLink = link.ToString();
-        //                var fileUri = new Uri(fileUrlLink);
-        //                string fileId = fileUri.Segments[^1];
-        //                string fileDirectoryPath = Path.Combine(variationDirectoryPath, fileId);
+                    var variationDirectoryPath = Path.Combine(itemDirectoryPath, variation.Id.ToString());
+                    if (!Directory.Exists(variationDirectoryPath)) {
+                        Directory.CreateDirectory(variationDirectoryPath);
+                    }
+                    var html = await httpClient.GetStringAsync(variation.OrderUrl.ToString()); // Puppeteer has a glitch with too many pages open at once.
+                    var LinkMatch = Regex.Matches(html, _fileLinkPattern, RegexOptions.IgnoreCase);
+                    var fileTasks = LinkMatch.Select(async (link) => {
+                        var fileUrlLink = link.ToString();
+                        var fileUri = new Uri(fileUrlLink);
+                        var fileId = fileUri.Segments[^1];
+                        var fileDirectoryPath = Path.Combine(variationDirectoryPath, fileId);
 
-        //                if (Directory.Exists(fileDirectoryPath))
-        //                    return;
-        //                Directory.CreateDirectory(fileDirectoryPath);
-        //                try {
-        //                    await this.DownloadFileFromRedirectUrlAsync(httpClient, fileUrlLink, fileDirectoryPath);
-        //                } catch (TaskCanceledException) {
-        //                    Debug.LogWarning($"File download canceled for {fileUrlLink}");
-        //                    Directory.Delete(fileDirectoryPath, true );
-        //                } catch (Exception error) {
-        //                    Debug.LogError(error);
-        //                    Directory.Delete(fileDirectoryPath, true );
-        //                }
-        //            });
-        //            await Task.WhenAll(fileTasks);
-        //        });
-        //        await Task.WhenAll(variationTasks);
-        //    });
-        //    await Task.WhenAll(itemInfoTasks);
-        //}
+                        if (Directory.Exists(fileDirectoryPath)) {
+                            return;
+                        }
+
+                        Directory.CreateDirectory(fileDirectoryPath);
+                        try {
+                            await DownloadFileFromRedirectUrlAsync(httpClient, fileUrlLink, fileDirectoryPath);
+                        } catch (TaskCanceledException) {
+                            Directory.Delete(fileDirectoryPath, true);
+                        } catch (Exception) {
+                            Directory.Delete(fileDirectoryPath, true);
+                        }
+                    });
+                    await Task.WhenAll(fileTasks);
+                });
+                await Task.WhenAll(variationTasks);
+            });
+            await Task.WhenAll(itemInfoTasks);
+        }
 
         /* This Test Method */
         private static async Task DownloadFileFromRedirectUrlAsync(HttpClient httpClient, string url, string destinationDirectoryPath) {

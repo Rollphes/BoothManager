@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement style="flex-grow: 1; justify-content: center; align-items: center;">
-        <ui:Label tabindex="-1" text="商品が選択されていません" parse-escape-sequences="true" display-tooltip-when-elided="true" />
+        <ui:Label tabindex="-1" text="Label" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CenterText" />
     </ui:VisualElement>
 </ui:UXML>

@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 using io.github.rollphes.epmanager.booth;
+using io.github.rollphes.epmanager.library;
 using io.github.rollphes.epmanager.popups;
-using io.github.rollphes.epmanager.utility;
 
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -21,7 +18,7 @@ namespace io.github.rollphes.epmanager.tabs {
     internal class LibraryTab : TabBase {
         private static readonly VisualTreeAsset _itemPanelUxml = Resources.Load<VisualTreeAsset>("UI/Components/ItemPanel");
         private static readonly VisualTreeAsset _itemListLineUxml = Resources.Load<VisualTreeAsset>("UI/Components/ItemListLine");
-        private static readonly VisualTreeAsset _nonItemSelectUxml = Resources.Load<VisualTreeAsset>("UI/Components/NonItemSelect");
+        private static readonly VisualTreeAsset _centerTextBoxUxml = Resources.Load<VisualTreeAsset>("UI/Components/CenterTextBox");
         private static readonly VisualTreeAsset _itemDetailUxml = Resources.Load<VisualTreeAsset>("UI/Components/ItemDetail");
 
         internal override string Tooltip => "ライブラリ";
@@ -34,7 +31,7 @@ namespace io.github.rollphes.epmanager.tabs {
         private float _imageSize = 100f;
         private string _searchText = "";
         private float _itemDetailContentWidth = 200f;
-        private ItemInfo _selectedItemInfo = null;
+        private Item _selectedItem = null;
 
         private readonly TagSelectPopup _tagSelectPopup;
         private readonly ShowSelectPopup _showSelectPopup;
@@ -51,7 +48,7 @@ namespace io.github.rollphes.epmanager.tabs {
             };
         }
 
-        internal override async void Show() {
+        internal override void Show() {
             base.Show();
 
             this._itemDetailContent = this._tabContent.Q<VisualElement>("ItemDetailContent");
@@ -108,16 +105,16 @@ namespace io.github.rollphes.epmanager.tabs {
 
             var textFilterField = this._tabContent.Q<ToolbarSearchField>("TextFilterField");
             textFilterField.value = this._searchText;
-            textFilterField.RegisterValueChangedCallback(async (evt) => {
+            textFilterField.RegisterValueChangedCallback((evt) => {
                 this._searchText = evt.newValue;
-                await this.ShowItemInfos();
+                this.ShowItems();
             });
 
             var imageSizeSlider = this._tabContent.Q<Slider>("ImageSizeSlider");
             imageSizeSlider.SetValueWithoutNotify(this._imageSize);
-            imageSizeSlider.RegisterValueChangedCallback(async (evt) => {
+            imageSizeSlider.RegisterValueChangedCallback((evt) => {
                 this._imageSize = evt.newValue;
-                await this.ShowItemInfos();
+                this.ShowItems();
             });
 
             foreach (var (className, popupContent) in this._classNameToPopupDictionary) {
@@ -129,28 +126,37 @@ namespace io.github.rollphes.epmanager.tabs {
                 };
             }
 
-            this._showSelectPopup.OnChangeArgLimitType += async (_) => await this.ShowItemInfos();
-            this._tagSelectPopup.OnChangeSelectedTag += async (_) => await this.ShowItemInfos();
+            this._showSelectPopup.OnChangeArgLimitType += (_) => this.ShowItems();
+            this._tagSelectPopup.OnChangeSelectedTag += (_) => this.ShowItems();
 
-            await this.ShowItemInfos();
+            this.ShowItems();
             this.ShowSelectItemDetail();
         }
 
-        private async Task ShowItemInfos() {
+        private void ShowItems() {
+            this._itemSelectorContent.Clear();
+
             if (!BoothClient.IsLoggedIn) {
-                var nonItemText = this._itemSelectorContent.Q<Label>("NonItemText");
-                nonItemText.text = "ログイン後に使用可能です";
+                _centerTextBoxUxml.CloneTree(this._itemSelectorContent);
+                var centerText = this._itemSelectorContent.Q<Label>("CenterText");
+                centerText.text = "ログイン後に使用可能です";
                 return;
             }
-            var itemInfos = await BoothClient.FetchItemInfos();
-            if (itemInfos == null || itemInfos.Length == 0) {
-                var nonItemText = this._itemSelectorContent.Q<Label>("NonItemText");
-                nonItemText.text = "アイテムがありません";
+
+            var items = Library.GetAll(new GetAllItemsOptions {
+                SearchText = this._searchText,
+                ArgLimitType = this._showSelectPopup.ArgLimitType,
+                Tags = this._tagSelectPopup._selectedTag != null ? new Tag[] { this._tagSelectPopup._selectedTag } : new Tag[] { }
+            });
+            if (items == null || items.Length == 0) {
+                _centerTextBoxUxml.CloneTree(this._itemSelectorContent);
+                var centerText = this._itemSelectorContent.Q<Label>("CenterText");
+                centerText.text = "アイテムがありません";
+                return;
             }
 
-            var filteredItemInfos = this.GetFilteredItemInfos(itemInfos);
             var selectedItemName = this._tabContent.Q<Label>("SelectedItemName");
-            selectedItemName.text = this._selectedItemInfo?.Name ?? "";
+            selectedItemName.text = this._selectedItem?.Name ?? "";
 
             var scrollView = new ScrollView();
             scrollView.style.flexGrow = 1;
@@ -162,7 +168,7 @@ namespace io.github.rollphes.epmanager.tabs {
             var container = scrollView.Q<VisualElement>("unity-content-and-vertical-scroll-container");
             scrollView.RegisterCallback<ClickEvent>((evt) => {
                 if (evt.target == scrollView.contentContainer || evt.target == container) {
-                    this._selectedItemInfo = null;
+                    this._selectedItem = null;
                     selectedItemName.text = "";
                     foreach (var child in scrollView.Children()) {
                         child.RemoveFromClassList("MouseOver");
@@ -171,11 +177,11 @@ namespace io.github.rollphes.epmanager.tabs {
                 }
             });
 
-            foreach (var itemInfo in filteredItemInfos) {
+            foreach (var item in items) {
                 var root = new VisualElement();
                 root.RegisterCallback<ClickEvent>((evt) => {
-                    this._selectedItemInfo = itemInfo;
-                    selectedItemName.text = itemInfo.Name;
+                    this._selectedItem = item;
+                    selectedItemName.text = item.Name;
                     foreach (var child in scrollView.Children()) {
                         child.RemoveFromClassList("MouseOver");
                     }
@@ -183,7 +189,7 @@ namespace io.github.rollphes.epmanager.tabs {
                     this.ShowSelectItemDetail();
                 });
 
-                if (this._selectedItemInfo?.Id == itemInfo.Id) {
+                if (this._selectedItem?.Id == item.Id) {
                     root.AddToClassList("MouseOver");
                     this.ShowSelectItemDetail();
                 }
@@ -193,8 +199,8 @@ namespace io.github.rollphes.epmanager.tabs {
 
                 var itemImage = root.Q<VisualElement>("ItemImage");
                 var itemName = root.Q<Label>("ItemName");
-                itemName.text = itemInfo.Name;
-                root.tooltip = itemInfo.Name;
+                itemName.text = item.Name;
+                root.tooltip = item.Name;
 
                 if (this._imageSize > 50) {
                     itemName.style.width = new StyleLength(new Length(this._imageSize, LengthUnit.Pixel));
@@ -203,7 +209,7 @@ namespace io.github.rollphes.epmanager.tabs {
                     itemImage.style.height = new StyleLength(new Length(this._imageSize - 10, LengthUnit.Pixel));
                 }
 
-                this.LoadImageFromUrlAsync(itemInfo.Images[0].Original.ToString(), (texture) => {
+                this.LoadImageFromUrlAsync(item.Images[0].Original.ToString(), (texture) => {
                     if (texture != null) {
                         itemImage.style.backgroundImage = new StyleBackground(texture);
                     }
@@ -212,57 +218,37 @@ namespace io.github.rollphes.epmanager.tabs {
                 scrollView.Add(root);
             }
 
-            this._itemSelectorContent.Clear();
             this._itemSelectorContent.Add(scrollView);
-        }
-
-        private ItemInfo[] GetFilteredItemInfos(ItemInfo[] itemInfos) {
-            var textFiltered = Array.FindAll(itemInfos, (itemInfo) => {
-                var normalizedItemName = Utility.ConvertToSearchText(itemInfo.Name);
-                var normalizedFilter = Utility.ConvertToSearchText(this._searchText);
-                return Regex.IsMatch(normalizedItemName, normalizedFilter);
-            });
-
-            var argLimitFiltered = this._showSelectPopup.ArgLimitType == ArgLimitType.All
-                ? textFiltered
-                : Array.FindAll(textFiltered, (itemInfo) => {
-                    var isR18 = itemInfo.Tags.Any((tag) => tag.Name == "R18");
-                    return this._showSelectPopup.ArgLimitType == ArgLimitType.AllAgesOnly != isR18;
-                });
-
-            var tagFiltered = Array.FindAll(argLimitFiltered, (itemInfo) => itemInfo.Tags.Any((tag) => {
-                return this._tagSelectPopup._selectedTagName == "" || tag.Name == this._tagSelectPopup._selectedTagName;
-            }));
-
-            return tagFiltered;
         }
 
         private void ShowSelectItemDetail() {
             this._itemDetailContent.Clear();
-            if (this._selectedItemInfo == null) {
-                _nonItemSelectUxml.CloneTree(this._itemDetailContent);
+            if (this._selectedItem == null) {
+                _centerTextBoxUxml.CloneTree(this._itemDetailContent);
+                var centerText = this._itemDetailContent.Q<Label>("CenterText");
+                centerText.text = "アイテムが選択されていません";
                 return;
             }
             _itemDetailUxml.CloneTree(this._itemDetailContent);
 
             var itemCategory = this._itemDetailContent.Q<Label>("ItemCategory");
-            itemCategory.text = $"{this._selectedItemInfo.Category.Parent.Name} > {this._selectedItemInfo.Category.Name}";
+            itemCategory.text = $"{this._selectedItem.Category.Parent.Name} > {this._selectedItem.Category.Name}";
 
             var shopIcon = this._itemDetailContent.Q<VisualElement>("ShopIcon");
-            this.LoadImageFromUrlAsync(this._selectedItemInfo.Shop.ThumbnailUrl.ToString(), (texture) => {
+            this.LoadImageFromUrlAsync(this._selectedItem.Shop.ThumbnailUrl.ToString(), (texture) => {
                 if (texture != null) {
                     shopIcon.style.backgroundImage = new StyleBackground(texture);
                 }
             });
 
             var shopName = this._itemDetailContent.Q<Label>("ShopName");
-            shopName.text = this._selectedItemInfo.Shop.Name;
+            shopName.text = this._selectedItem.Shop.Name;
 
             var itemName = this._itemDetailContent.Q<Label>("ItemName");
-            itemName.text = this._selectedItemInfo.Name;
+            itemName.text = this._selectedItem.Name;
 
             var wishListsCount = this._itemDetailContent.Q<Label>("WishListsCount");
-            wishListsCount.text = this._selectedItemInfo.WishListsCount.ToString();
+            wishListsCount.text = this._selectedItem.WishListsCount.ToString();
         }
 
         private void LoadImageFromUrlAsync(string url, Action<Texture2D> onCompleted) {

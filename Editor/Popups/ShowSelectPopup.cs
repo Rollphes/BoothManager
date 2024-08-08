@@ -1,18 +1,14 @@
 using System;
 using System.Collections.Generic;
 
+using io.github.rollphes.epmanager.library;
+
 using UnityEngine;
 using UnityEngine.UIElements;
 
 using VRC.PackageManagement.Core;
 
 namespace io.github.rollphes.epmanager.popups {
-    internal enum ArgLimitType {
-        All,
-        AllAgesOnly,
-        R18Only
-    }
-
     internal class ShowSelectPopup : PopupBase {
         private static readonly Dictionary<ArgLimitType, string> _argLimitDropDownItems = new() {
             {ArgLimitType.All ,"すべて"},

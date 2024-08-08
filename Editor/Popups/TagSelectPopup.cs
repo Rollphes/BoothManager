@@ -1,11 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 using io.github.rollphes.epmanager.booth;
-using io.github.rollphes.epmanager.utility;
+using io.github.rollphes.epmanager.library;
 
 using UnityEditor.UIElements;
 
@@ -17,7 +13,7 @@ namespace io.github.rollphes.epmanager.popups {
         private static readonly VisualTreeAsset _tagListLineUxml = Resources.Load<VisualTreeAsset>("UI/Components/TagListLine");
 
         internal Action<Tag> OnChangeSelectedTag;
-        internal string _selectedTagName = "";
+        internal Tag _selectedTag;
 
         protected override VisualTreeAsset InitTagUxml => Resources.Load<VisualTreeAsset>("UI/Popups/TagSelectPopupContent");
 
@@ -28,33 +24,28 @@ namespace io.github.rollphes.epmanager.popups {
             return new Vector2(200, 500);
         }
 
-        public override async void OnOpen() {
+        public override void OnOpen() {
             base.OnOpen();
             var root = this.editorWindow.rootVisualElement;
 
             var tagFilterField = root.Q<ToolbarSearchField>("TagFilterField");
             tagFilterField.value = this._searchText;
-            tagFilterField.RegisterValueChangedCallback(async (evt) => {
+            tagFilterField.RegisterValueChangedCallback((evt) => {
                 this._searchText = evt.newValue;
-                await this.ShowTags();
+                this.ShowTags();
             });
 
             this._tagListView = root.Q<ScrollView>("TagListView");
 
-            await this.ShowTags();
+            this.ShowTags();
         }
 
-        private async Task ShowTags() {
+        private void ShowTags() {
             this._tagListView.Clear();
 
-            var itemInfos = await BoothClient.FetchItemInfos();
-            if (itemInfos == null || itemInfos.Length == 0) {
-                return;
-            }
+            var tags = Library.GetTags(this._searchText);
 
-            var filteredTags = this.GetFilteredTags(itemInfos);
-
-            foreach (var tag in filteredTags) {
+            foreach (var tag in tags) {
                 var root = new VisualElement();
                 _tagListLineUxml.CloneTree(root);
                 root.RegisterCallback<MouseOverEvent>((evt) => {
@@ -63,37 +54,20 @@ namespace io.github.rollphes.epmanager.popups {
                 root.RegisterCallback<MouseLeaveEvent>((evt) => {
                     root.RemoveFromClassList("MouseOver");
                 });
-                root.RegisterCallback<ClickEvent>(async (evt) => {
-                    this._selectedTagName = this._selectedTagName == tag.Name ? "" : tag.Name;
+                root.RegisterCallback<ClickEvent>((evt) => {
+                    this._selectedTag = this._selectedTag == tag ? null : tag;
                     this.OnChangeSelectedTag?.Invoke(tag);
-                    await this.ShowTags();
+                    this.ShowTags();
                 });
 
                 var tagName = root.Q<Label>("TagName");
                 tagName.text = tag.Name;
 
                 var isSelected = root.Q<Label>("IsSelected");
-                isSelected.text = tag.Name == this._selectedTagName ? "✔" : "";
+                isSelected.text = tag == this._selectedTag ? "✔" : "";
 
                 this._tagListView.Add(root);
             }
-        }
-
-        private Tag[] GetFilteredTags(ItemInfo[] itemInfos) {
-            var tags = itemInfos.SelectMany((itemInfo) => itemInfo.Tags).ToArray();
-            var tagList = new List<Tag>();
-
-            foreach (var tag in tags) {
-                if (!tagList.Select((tag) => tag.Name).ToList().Contains(tag.Name)) {
-                    tagList.Add(tag);
-                }
-            }
-
-            return Array.FindAll(tagList.ToArray(), (tag) => {
-                var normalizedItemName = Utility.ConvertToSearchText(tag.Name);
-                var normalizedFilter = Utility.ConvertToSearchText(this._searchText);
-                return Regex.IsMatch(normalizedItemName, normalizedFilter);
-            });
         }
     }
 }

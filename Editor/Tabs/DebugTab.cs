@@ -1,5 +1,3 @@
-using io.github.rollphes.epmanager.booth;
-
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -16,10 +14,8 @@ namespace io.github.rollphes.epmanager.tabs {
             base.Show();
 
             var elementButton = this._tabContent.Q<VisualElement>("ElementButton");
-            elementButton.RegisterCallback<ClickEvent>(async (evt) => {
+            elementButton.RegisterCallback<ClickEvent>((evt) => {
                 Debug.Log("Element clicked!");
-                await BoothClient.FetchItemInfos();
-                Debug.Log("Library fetched!");
             });
         }
     }
